@@ -1,0 +1,34 @@
+IS 403 PROJECT PART 2:
+
+
+Division of duties:
+
+Justin -> ERD, Event submission page (DONE)
+Ryan -> List of Views 
+Jaxon -> Completion of Log in Page
+Emma -> Completion of Landing Page
+
+Schedule of duty completion:
+Justin -> ERD -> 10.22.25 (DONE)
+Justin -> Event submission page -> 10.22.25
+Ryan -> List of Views ->
+Jaxon -> Completion of Log in Page
+Emma -> Completion of Landing Page
+Database layout (ERD) - submit image of ERD (Justin:))
+
+There is no limit to the # of tables but as stated in class, you will at least have a table for security (Justin) (Users table)
+List of Views (Ryan)
+
+The HTML/EJS pages that need to be created :
+Completion of Landing Page (Emma)
+Does not have to be functional yet
+Completion of Log in Page (Jaxon)
+Does not have to be functional yet
+WILL BE DONE BY MONDAY IN CLASS
+
+
+Admin pages, views for users
+
+
+For the views that you made (landing and log in) you will submit either the screen shots or the actual ejs files.
+
