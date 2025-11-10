@@ -65,15 +65,21 @@ const knex = require("knex")({
 // Tells Express how to read form data sent in the body of a request
 app.use(express.urlencoded({extended: true}));
 
+// Serve static files from public directory (for CSS, images, etc.)
+// This must come BEFORE authentication middleware so CSS/images load without login
+app.use(express.static("public"));
+
 // Global authentication middleware - runs on EVERY request
+// Note: Static files are served by express.static above, so CSS/images load without auth
+// If a static file doesn't exist, express.static calls next() and the request continues here
 app.use((req, res, next) => {
-    // Skip authentication for login routes
-    if (req.path === '/' || req.path === '/login' || req.path === '/logout') {
+    // Skip authentication for public routes
+    if (req.path === '/' || req.path === '/login' || req.path === '/logout' || req.path === '/events') {
         //continue with the request path
         return next();
     }
     
-    // Check if user is logged in for all other routes
+    // Check if user is logged in for all other routes (including /admin/*)
     if (req.session.isLoggedIn) {
         //notice no return because nothing below it
         next(); // User is logged in, continue
@@ -83,65 +89,100 @@ app.use((req, res, next) => {
     }
 });
 
-// Main page route - load full pokemon list (ordered by name) when logged in
+// Main page route - redirect to admin dashboard if logged in, otherwise show login
 app.get("/", (req, res) => {
     // Check if user is logged in
     if (req.session.isLoggedIn) {
-        // Query all pokemon ordered by description (name)
-        knex.select("id", "description", "base_total")
-            .from("pokemon")
-            .orderBy("description", "asc")
-            .then(pokemon => {
-                res.render("index", { pokemon: pokemon, error_message: "", username: req.session && req.session.username });
-            })
-            .catch(err => {
-                console.error("Failed to load pokemon:", err);
-                res.render("index", { pokemon: [], error_message: "Database error loading pokemon.", username: req.session && req.session.username });
-            });
+        // Redirect to admin dashboard
+        res.redirect("/admin/dashboard");
     } 
     else {
         res.render("login", { error_message: "" });
     }
 });
 
-// Handle search on the same page (form posts to "/")
-app.post("/", (req, res) => {
-    if (!req.session.isLoggedIn) {
-        return res.render("login", { error_message: "" });
+// Public events page - no login required
+app.get("/events", (req, res) => {
+    // Get filter parameters from query string
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const categories = req.query.categories ? (Array.isArray(req.query.categories) ? req.query.categories : [req.query.categories]) : [];
+    const format = req.query.format || 'grid';
+    
+    // Query event types for category filter
+    const eventTypesQuery = knex.select("eventtypeid", "eventtypename")
+        .from("eventtypes")
+        .orderBy("eventtypename", "asc");
+    
+    // Build events query
+    let eventsQuery = knex.select(
+        "events.eventid",
+        "events.eventname",
+        "events.eventdescription",
+        "events.starttime",
+        "events.endtime",
+        "events.eventlocation",
+        "events.eventhost",
+        "events.eventtypeid",
+        "eventtypes.eventtypename"
+    )
+    .from("events")
+    .leftJoin("eventtypes", "events.eventtypeid", "eventtypes.eventtypeid")
+    .where("events.endtime", ">", knex.fn.now()); // Only show future events
+    
+    // Apply date filters
+    // If only startDate is provided, show events from that date onward
+    // If only endDate is provided, show events up to that date
+    // If both are provided, show events within that range
+    if (startDate && endDate) {
+        // Date range: events that overlap with the selected range
+        // An event overlaps if: event starts before range ends AND event ends after range starts
+        eventsQuery = eventsQuery.where("events.starttime", "<=", endDate + " 23:59:59")
+                                  .where("events.endtime", ">=", startDate + " 00:00:00");
+    } else if (startDate) {
+        // Only start date: show events that end on or after this date
+        eventsQuery = eventsQuery.where("events.endtime", ">=", startDate + " 00:00:00");
+    } else if (endDate) {
+        // Only end date: show events that start on or before this date
+        eventsQuery = eventsQuery.where("events.starttime", "<=", endDate + " 23:59:59");
     }
-
-    const name = (req.body.name || "").trim();
-    // Prepare queries: full list + search
-    const listQuery = knex.select("id", "description", "base_total").from("pokemon").orderBy("description", "asc");
-
-    if (!name) {
-        // Reload list with an error message
-        return listQuery
-            .then(pokemon => res.render("index", { pokemon, error_message: "Please enter a Pokemon name.", username: req.session && req.session.username }))
-            .catch(err => {
-                console.error("DB error:", err);
-                res.render("index", { pokemon: [], error_message: "Database error.", username: req.session && req.session.username });
+    
+    // Apply category filters
+    if (categories.length > 0) {
+        eventsQuery = eventsQuery.whereIn("events.eventtypeid", categories.map(id => parseInt(id)));
+    }
+    
+    eventsQuery = eventsQuery.orderBy("events.starttime", "asc");
+    
+    // Execute both queries
+    Promise.all([eventTypesQuery, eventsQuery])
+        .then(([eventTypes, events]) => {
+            res.render("events", { 
+                events: events || [], 
+                eventTypes: eventTypes || [],
+                currentFilters: {
+                    startDate: startDate || '',
+                    endDate: endDate || '',
+                    categories: categories,
+                    format: format
+                }
             });
-    }
-
-    // Only search and render a dedicated searchResult view per project requirements
-    knex.select("description", "base_total")
-        .from("pokemon")
-        .whereRaw("LOWER(description) = LOWER(?)", [name])
-        .then(rows => {
-            if (rows.length > 0) {
-                res.render("searchResult", { pokemon: rows[0], error_message: "", username: req.session && req.session.username });
-            } else {
-                res.render("searchResult", { pokemon: null, error_message: "Pokemon not found.", username: req.session && req.session.username });
-            }
         })
         .catch(err => {
-            console.error("Search error:", err);
-            res.render("searchResult", { pokemon: null, error_message: "Database error during search.", username: req.session && req.session.username });
+            console.error("Failed to load events:", err);
+            res.render("events", { 
+                events: [], 
+                eventTypes: [],
+                currentFilters: {
+                    startDate: '',
+                    endDate: '',
+                    categories: [],
+                    format: format
+                },
+                error_message: "Failed to load events." 
+            });
         });
 });
-
-
 
 // This creates attributes in the session object to keep track of user and if they logged in
 app.post("/login", (req, res) => {
@@ -157,7 +198,7 @@ app.post("/login", (req, res) => {
       if (users.length > 0) {
         req.session.isLoggedIn = true;
         req.session.username = sName;
-        res.redirect("/");
+        res.redirect("/admin/dashboard");
       } else {
         // No matching user found
         res.render("login", { error_message: "Invalid login" });
@@ -181,6 +222,258 @@ app.get("/logout", (req, res) => {
     });
 });
 
+// ============================================
+// ADMIN ROUTES - All require authentication
+// ============================================
+
+// Admin Dashboard - List all events
+app.get("/admin/dashboard", (req, res) => {
+    // Query events with event type names
+    knex.select(
+        "events.eventid",
+        "events.eventname",
+        "events.starttime",
+        "events.endtime",
+        "events.eventlocation",
+        "events.eventhost",
+        "eventtypes.eventtypename as typename"
+    )
+    .from("events")
+    .leftJoin("eventtypes", "events.eventtypeid", "eventtypes.eventtypeid")
+    .orderBy("events.starttime", "asc")
+    .then(events => {
+        // Ensure events is always an array
+        res.render("adminDashboard", { events: events || [] });
+    })
+    .catch(err => {
+        console.error("Failed to load events:", err);
+        res.render("adminDashboard", { events: [], error_message: "Database error loading events." });
+    });
+});
+
+// Admin Create Event - Show form
+app.get("/admin/create", (req, res) => {
+    // Get event types for dropdown
+    knex.select("eventtypeid", "eventtypename")
+        .from("eventtypes")
+        .orderBy("eventtypename", "asc")
+        .then(eventTypes => {
+            // Ensure eventTypes is always an array
+            res.render("adminCreate", { eventTypes: eventTypes || [] });
+        })
+        .catch(err => {
+            console.error("Failed to load event types:", err);
+            res.render("adminCreate", { eventTypes: [], error_message: "Database error loading event types." });
+        });
+});
+
+// Admin Create Event - Handle form submission
+app.post("/admin/create", (req, res) => {
+    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID } = req.body;
+    
+    // Basic validation
+    if (!eventName || !startTime || !endTime || !eventTypeID) {
+        return knex.select("eventtypeid", "eventtypename")
+            .from("eventtypes")
+            .then(eventTypes => {
+                res.render("adminCreate", { 
+                    eventTypes: eventTypes || [], 
+                    error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Event Type)." 
+                });
+            })
+            .catch(() => {
+                res.redirect("/admin/dashboard");
+            });
+    }
+    
+    // Convert datetime-local format (YYYY-MM-DDTHH:mm) to PostgreSQL timestamp format
+    // datetime-local sends "2025-11-05T10:00", PostgreSQL needs "2025-11-05 10:00:00"
+    const formatDateTime = (datetimeLocal) => {
+        if (!datetimeLocal) return null;
+        // Replace T with space and add seconds if not present
+        return datetimeLocal.replace('T', ' ') + ':00';
+    };
+    
+    const formattedStartTime = formatDateTime(startTime);
+    const formattedEndTime = formatDateTime(endTime);
+    
+    // Validate that end time is after start time
+    if (new Date(formattedEndTime) <= new Date(formattedStartTime)) {
+        return knex.select("eventtypeid", "eventtypename")
+            .from("eventtypes")
+            .then(eventTypes => {
+                res.render("adminCreate", { 
+                    eventTypes: eventTypes || [], 
+                    error_message: "End time must be after start time." 
+                });
+            })
+            .catch(() => {
+                res.redirect("/admin/dashboard");
+            });
+    }
+    
+    knex("events")
+        .insert({
+            eventname: eventName.trim(),
+            eventdescription: eventDescription ? eventDescription.trim() : null,
+            starttime: formattedStartTime,
+            endtime: formattedEndTime,
+            eventlocation: eventLocation ? eventLocation.trim() : null,
+            eventhost: eventHost ? eventHost.trim() : null,
+            eventtypeid: parseInt(eventTypeID)
+        })
+        .then(() => {
+            res.redirect("/admin/dashboard");
+        })
+        .catch(err => {
+            console.error("Failed to create event:", err);
+            // Reload form with error
+            knex.select("eventtypeid", "eventtypename")
+                .from("eventtypes")
+                .then(eventTypes => {
+                    res.render("adminCreate", { 
+                        eventTypes: eventTypes || [], 
+                        error_message: "Failed to create event. Please check your input and try again. Error: " + (err.message || "Unknown error")
+                    });
+                })
+                .catch(() => {
+                    res.redirect("/admin/dashboard");
+                });
+        });
+});
+
+// Admin Edit Event - Show form
+app.get("/admin/edit/:id", (req, res) => {
+    const eventId = req.params.id;
+    
+    // Get event and event types
+    Promise.all([
+        knex.select("*").from("events").where("eventid", eventId).first(),
+        knex.select("eventtypeid", "eventtypename").from("eventtypes").orderBy("eventtypename", "asc")
+    ])
+    .then(([event, eventTypes]) => {
+        if (!event) {
+            return res.redirect("/admin/dashboard");
+        }
+        // Ensure eventTypes is always an array
+        res.render("adminEdit", { event: event, eventTypes: eventTypes || [] });
+    })
+    .catch(err => {
+        console.error("Failed to load event:", err);
+        res.redirect("/admin/dashboard");
+    });
+});
+
+// Admin Edit Event - Handle form submission
+app.post("/admin/edit/:id", (req, res) => {
+    const eventId = req.params.id;
+    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID } = req.body;
+    
+    // Basic validation
+    if (!eventName || !startTime || !endTime || !eventTypeID) {
+        // Reload edit form with error
+        return Promise.all([
+            knex.select("*").from("events").where("eventid", eventId).first(),
+            knex.select("eventtypeid", "eventtypename").from("eventtypes").orderBy("eventtypename", "asc")
+        ])
+        .then(([event, eventTypes]) => {
+            if (!event) {
+                return res.redirect("/admin/dashboard");
+            }
+            res.render("adminEdit", { 
+                event: event, 
+                eventTypes: eventTypes || [], 
+                error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Event Type)." 
+            });
+        })
+        .catch(() => {
+            res.redirect("/admin/dashboard");
+        });
+    }
+    
+    // Convert datetime-local format (YYYY-MM-DDTHH:mm) to PostgreSQL timestamp format
+    const formatDateTime = (datetimeLocal) => {
+        if (!datetimeLocal) return null;
+        // Replace T with space and add seconds if not present
+        return datetimeLocal.replace('T', ' ') + ':00';
+    };
+    
+    const formattedStartTime = formatDateTime(startTime);
+    const formattedEndTime = formatDateTime(endTime);
+    
+    // Validate that end time is after start time
+    if (new Date(formattedEndTime) <= new Date(formattedStartTime)) {
+        return Promise.all([
+            knex.select("*").from("events").where("eventid", eventId).first(),
+            knex.select("eventtypeid", "eventtypename").from("eventtypes").orderBy("eventtypename", "asc")
+        ])
+        .then(([event, eventTypes]) => {
+            if (!event) {
+                return res.redirect("/admin/dashboard");
+            }
+            res.render("adminEdit", { 
+                event: event, 
+                eventTypes: eventTypes || [], 
+                error_message: "End time must be after start time." 
+            });
+        })
+        .catch(() => {
+            res.redirect("/admin/dashboard");
+        });
+    }
+    
+    knex("events")
+        .where("eventid", eventId)
+        .update({
+            eventname: eventName.trim(),
+            eventdescription: eventDescription ? eventDescription.trim() : null,
+            starttime: formattedStartTime,
+            endtime: formattedEndTime,
+            eventlocation: eventLocation ? eventLocation.trim() : null,
+            eventhost: eventHost ? eventHost.trim() : null,
+            eventtypeid: parseInt(eventTypeID)
+        })
+        .then(() => {
+            res.redirect("/admin/dashboard");
+        })
+        .catch(err => {
+            console.error("Failed to update event:", err);
+            // Reload edit form with error
+            Promise.all([
+                knex.select("*").from("events").where("eventid", eventId).first(),
+                knex.select("eventtypeid", "eventtypename").from("eventtypes").orderBy("eventtypename", "asc")
+            ])
+            .then(([event, eventTypes]) => {
+                if (!event) {
+                    return res.redirect("/admin/dashboard");
+                }
+                res.render("adminEdit", { 
+                    event: event, 
+                    eventTypes: eventTypes || [], 
+                    error_message: "Failed to update event. Please check your input and try again. Error: " + (err.message || "Unknown error")
+                });
+            })
+            .catch(() => {
+                res.redirect("/admin/dashboard");
+            });
+        });
+});
+
+// Admin Delete Event
+app.post("/admin/delete/:id", (req, res) => {
+    const eventId = req.params.id;
+    
+    knex("events")
+        .where("eventid", eventId)
+        .del()
+        .then(() => {
+            res.redirect("/admin/dashboard");
+        })
+        .catch(err => {
+            console.error("Failed to delete event:", err);
+            res.redirect("/admin/dashboard");
+        });
+});
 
 // Note: /users route removed to keep the project minimal for assignment requirements.
 

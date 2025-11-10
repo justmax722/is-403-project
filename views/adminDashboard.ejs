@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>Manage Events</h2>
+      <a href="/logout" class="btn" style="margin-left: auto;">Logout</a>
+    </div>
+    <a href="/admin/create" class="btn">+ Create New Event</a>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Location</th>
+          <th>Host</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (events && events.length > 0) { %>
+          <% events.forEach(event => { %>
+            <tr>
+              <td><%= event.eventname %></td>
+              <td><%= event.starttime ? new Date(event.starttime).toLocaleString() : 'N/A' %></td>
+              <td><%= event.endtime ? new Date(event.endtime).toLocaleString() : 'N/A' %></td>
+              <td><%= event.eventlocation || 'N/A' %></td>
+              <td><%= event.eventhost || 'N/A' %></td>
+              <td><%= event.typename || 'N/A' %></td>
+              <td>
+                <a href="/admin/edit/<%= event.eventid %>" class="btn small">Edit</a>
+                <form action="/admin/delete/<%= event.eventid %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn small danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 20px;">No events found. <a href="/admin/create">Create your first event</a></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

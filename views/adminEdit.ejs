@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Event</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Edit Event</h2>
+    <a href="/admin/dashboard" class="btn">← Back to Dashboard</a>
+    
+    <% if (typeof error_message !== 'undefined' && error_message) { %>
+      <div style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+        <%= error_message %>
+      </div>
+    <% } %>
+
+    <form action="/admin/edit/<%= event.eventid %>" method="POST" class="form">
+      <label>Event Name</label>
+      <input type="text" name="eventName" value="<%= event.eventname %>" required>
+
+      <label>Description</label>
+      <textarea name="eventDescription"><%= event.eventdescription || '' %></textarea>
+
+      <label>Start Time</label>
+      <input type="datetime-local" name="startTime" value="<%= event.starttime ? new Date(event.starttime).toISOString().slice(0, 16) : '' %>" required>
+
+      <label>End Time</label>
+      <input type="datetime-local" name="endTime" value="<%= event.endtime ? new Date(event.endtime).toISOString().slice(0, 16) : '' %>" required>
+
+      <label>Location</label>
+      <input type="text" name="eventLocation" value="<%= event.eventlocation || '' %>">
+
+      <label>Host</label>
+      <input type="text" name="eventHost" value="<%= event.eventhost || '' %>">
+
+      <label>Event Type</label>
+      <select name="eventTypeID" required>
+        <% if (eventTypes && eventTypes.length > 0) { %>
+          <% eventTypes.forEach(type => { %>
+            <option value="<%= type.eventtypeid %>" <%= event.eventtypeid == type.eventtypeid ? 'selected' : '' %>>
+              <%= type.eventtypename %>
+            </option>
+          <% }) %>
+        <% } else { %>
+          <option value="<%= event.eventtypeid %>" selected>No event types available</option>
+        <% } %>
+      </select>
+      <% if (!eventTypes || eventTypes.length === 0) { %>
+        <p style="color: red; font-size: 0.9em;">Warning: No event types found in database.</p>
+      <% } %>
+
+      <button type="submit" class="btn">Update Event</button>
+    </form>
+  </div>
+</body>
+</html>
