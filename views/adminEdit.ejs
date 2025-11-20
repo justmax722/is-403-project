@@ -2,57 +2,301 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Event</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Event - IS Event Calendar</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.8em;
+      font-weight: 600;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .header-nav a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      font-size: 0.95em;
+    }
+
+    .header-nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    .page-header {
+      margin-bottom: 25px;
+    }
+
+    .page-header h2 {
+      font-size: 1.8em;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.95em;
+      margin-bottom: 20px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #5568d3;
+      text-decoration: underline;
+    }
+
+    .error-message {
+      background-color: #fee;
+      color: #c33;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 25px;
+      border: 1px solid #fcc;
+      font-size: 0.95em;
+    }
+
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95em;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="url"],
+    .form-group input[type="datetime-local"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95em;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="url"]:focus,
+    .form-group input[type="datetime-local"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 5px;
+      color: #6c757d;
+      font-size: 0.85em;
+    }
+
+    .warning-message {
+      color: #dc3545;
+      font-size: 0.9em;
+      margin-top: 5px;
+      padding: 8px;
+      background: #fff3cd;
+      border-radius: 4px;
+      border: 1px solid #ffc107;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s;
+      text-align: center;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
 <body>
+  <div class="header">
+    <h1>IS Event Calendar - Admin</h1>
+    <div class="header-nav">
+      <a href="/events">View Public Events</a>
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+
   <div class="container">
-    <h2>Edit Event</h2>
-    <a href="/admin/dashboard" class="btn">← Back to Dashboard</a>
+    <div class="page-header">
+      <h2>Edit Event</h2>
+      <a href="/admin/dashboard" class="back-link">← Back to Dashboard</a>
+    </div>
     
     <% if (typeof error_message !== 'undefined' && error_message) { %>
-      <div style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+      <div class="error-message">
         <%= error_message %>
       </div>
     <% } %>
 
-    <form action="/admin/edit/<%= event.eventid %>" method="POST" class="form">
-      <label>Event Name</label>
-      <input type="text" name="eventName" value="<%= event.eventname %>" required>
+    <div class="form-container">
+      <form action="/admin/edit/<%= event.eventid %>" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="eventName">Event Name <span style="color: #dc3545;">*</span></label>
+          <input type="text" id="eventName" name="eventName" value="<%= event.eventname %>" required>
+        </div>
 
-      <label>Description</label>
-      <textarea name="eventDescription"><%= event.eventdescription || '' %></textarea>
+        <div class="form-group">
+          <label for="eventDescription">Description</label>
+          <textarea id="eventDescription" name="eventDescription" placeholder="Enter event description (optional)"><%= event.eventdescription || '' %></textarea>
+        </div>
 
-      <label>Start Time</label>
-      <input type="datetime-local" name="startTime" value="<%= event.starttime ? new Date(event.starttime).toISOString().slice(0, 16) : '' %>" required>
+        <div class="form-group">
+          <label for="startTime">Start Time <span style="color: #dc3545;">*</span></label>
+          <input type="datetime-local" id="startTime" name="startTime" value="<%= event.starttime ? new Date(event.starttime).toISOString().slice(0, 16) : '' %>" required>
+        </div>
 
-      <label>End Time</label>
-      <input type="datetime-local" name="endTime" value="<%= event.endtime ? new Date(event.endtime).toISOString().slice(0, 16) : '' %>" required>
+        <div class="form-group">
+          <label for="endTime">End Time <span style="color: #dc3545;">*</span></label>
+          <input type="datetime-local" id="endTime" name="endTime" value="<%= event.endtime ? new Date(event.endtime).toISOString().slice(0, 16) : '' %>" required>
+        </div>
 
-      <label>Location</label>
-      <input type="text" name="eventLocation" value="<%= event.eventlocation || '' %>">
+        <div class="form-group">
+          <label for="eventLocation">Location</label>
+          <input type="text" id="eventLocation" name="eventLocation" value="<%= event.eventlocation || '' %>" placeholder="Enter event location (optional)">
+        </div>
 
-      <label>Host</label>
-      <input type="text" name="eventHost" value="<%= event.eventhost || '' %>">
+        <div class="form-group">
+          <label for="eventHost">Host</label>
+          <input type="text" id="eventHost" name="eventHost" value="<%= event.eventhost || '' %>" placeholder="Enter event host (optional)">
+        </div>
 
-      <label>Event Type</label>
-      <select name="eventTypeID" required>
-        <% if (eventTypes && eventTypes.length > 0) { %>
-          <% eventTypes.forEach(type => { %>
-            <option value="<%= type.eventtypeid %>" <%= event.eventtypeid == type.eventtypeid ? 'selected' : '' %>>
-              <%= type.eventtypename %>
-            </option>
-          <% }) %>
-        <% } else { %>
-          <option value="<%= event.eventtypeid %>" selected>No event types available</option>
-        <% } %>
-      </select>
-      <% if (!eventTypes || eventTypes.length === 0) { %>
-        <p style="color: red; font-size: 0.9em;">Warning: No event types found in database.</p>
-      <% } %>
+        <div class="form-group">
+          <label for="eventurl">Event Link/URL</label>
+          <input type="url" id="eventurl" name="eventurl" value="<%= event.eventurl || '' %>" placeholder="Enter event URL (e.g., RSVP link) (optional)">
+        </div>
 
-      <button type="submit" class="btn">Update Event</button>
-    </form>
+        <div class="form-group">
+          <label for="eventlinktext">Link Text (Optional)</label>
+          <input type="text" id="eventlinktext" name="eventlinktext" value="<%= event.eventlinktext || '' %>" placeholder="Enter custom text for the link (e.g., 'RSVP Now', 'Register Here') (optional)">
+          <small>Leave blank to use "Click here" as default</small>
+        </div>
+
+        <div class="form-group">
+          <label for="eventimage">Event Image</label>
+          <% if (event.eventimagepath) { %>
+            <div style="margin-bottom: 10px;">
+              <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 5px;">Current image:</p>
+              <img src="<%= event.eventimagepath %>" alt="Event image" style="max-width: 300px; max-height: 200px; border-radius: 4px; border: 1px solid #ddd;">
+            </div>
+          <% } %>
+          <input type="file" id="eventimage" name="eventimage" accept="image/*">
+          <small>Optional: Upload a new image to replace the current one (jpg, jpeg, png, gif, max 5MB)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="eventTypeID">Event Type <span style="color: #dc3545;">*</span></label>
+          <select id="eventTypeID" name="eventTypeID" required>
+            <% if (eventTypes && eventTypes.length > 0) { %>
+              <% eventTypes.forEach(type => { %>
+                <option value="<%= type.eventtypeid %>" <%= event.eventtypeid == type.eventtypeid ? 'selected' : '' %>>
+                  <%= type.eventtypename %>
+                </option>
+              <% }) %>
+            <% } else { %>
+              <option value="<%= event.eventtypeid %>" selected>No event types available</option>
+            <% } %>
+          </select>
+          <% if (!eventTypes || eventTypes.length === 0) { %>
+            <div class="warning-message">
+              Warning: No event types found in database.
+            </div>
+          <% } %>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Event</button>
+      </form>
+    </div>
   </div>
 </body>
 </html>
