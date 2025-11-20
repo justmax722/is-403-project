@@ -1,0 +1,10 @@
+/* Global styles for IS Event Calendar */
+/* Note: Most styles are inline in each EJS file for this project */
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* This file is intentionally minimal as styles are defined inline in EJS files */
+

@@ -2,13 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IS Event Calendar</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.8em;
+      font-weight: 600;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .header-nav a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      font-size: 0.95em;
+    }
+
+    .header-nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
     .layout {
       display: flex;
       width: 100%;
-      min-height: 100vh;
+      flex: 1;
     }
 
     .sidebar {
@@ -18,8 +69,9 @@
       border-right: 1px solid #ddd;
       position: sticky;
       top: 0;
-      height: 100vh;
+      height: calc(100vh - 72px);
       overflow-y: auto;
+      align-self: flex-start;
     }
 
     .sidebar h3 {
@@ -127,6 +179,8 @@
       width: 100%;
       height: 150px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-size: cover;
+      background-position: center;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -136,6 +190,24 @@
       text-align: center;
       padding: 10px;
       box-sizing: border-box;
+      position: relative;
+    }
+
+    .card-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+      z-index: 0;
+    }
+
+    .card-header-text {
+      position: relative;
+      z-index: 1;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
 
     .card-list .card-header {
@@ -183,6 +255,15 @@
   </style>
 </head>
 <body>
+  <div class="header">
+    <h1>IS Event Calendar</h1>
+    <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
+      <div class="header-nav">
+        <a href="/admin/dashboard">Admin Dashboard</a>
+        <a href="/logout">Logout</a>
+      </div>
+    <% } %>
+  </div>
   <div class="layout">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -224,13 +305,12 @@
         
         <!-- Format Filter -->
         <label>Format</label>
-        <select name="format" id="format" onchange="changeFormat(this.value)">
+        <select name="format" id="format">
           <option value="grid" <%= currentFilters.format === 'grid' ? 'selected' : '' %>>Grid</option>
           <option value="list" <%= currentFilters.format === 'list' ? 'selected' : '' %>>List</option>
         </select>
         
         <div class="filter-actions">
-          <button type="submit">Apply Filters</button>
           <button type="button" class="clear-filters" onclick="clearFilters()">Clear Filters</button>
         </div>
       </form>
@@ -243,8 +323,12 @@
         <% if (events && events.length > 0) { %>
           <% events.forEach(event => { %>
             <div class="card">
-              <div class="card-header">
-                <%= event.eventname %>
+              <% if (event.eventimagepath) { %>
+                <div class="card-header" style="background-image: url('<%= event.eventimagepath %>');">
+              <% } else { %>
+                <div class="card-header">
+              <% } %>
+                <div class="card-header-text"><%= event.eventname %></div>
               </div>
               <div class="card-body">
                 <h3><%= event.eventname %></h3>
@@ -275,6 +359,9 @@
                 <% if (event.eventdescription) { %>
                   <p><%= event.eventdescription %></p>
                 <% } %>
+                <% if (event.eventurl) { %>
+                  <p><strong>Link:</strong> <a href="<%= event.eventurl %>" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 500;"><%= event.eventlinktext || 'Click here' %></a></p>
+                <% } %>
               </div>
             </div>
           <% }) %>
@@ -288,26 +375,8 @@
   </div>
 
   <script>
-    // Change format display without page reload
-    function changeFormat(format) {
-      const container = document.getElementById('eventsContainer');
-      if (format === 'list') {
-        container.className = 'card-list';
-      } else {
-        container.className = 'card-grid';
-      }
-      
-      // Update URL to persist format selection (preserve other filters)
-      const url = new URL(window.location);
-      url.searchParams.set('format', format);
-      // Keep existing filters in URL
-      window.history.pushState({}, '', url);
-    }
-    
-    // Submit form with all selected categories
-    document.getElementById('filterForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
+    // Function to submit filters automatically
+    function submitFilters() {
       const formData = new URLSearchParams();
       
       // Add date filters
@@ -328,7 +397,7 @@
       
       // Redirect with filters
       window.location.href = '/events?' + formData.toString();
-    });
+    }
 
     // Toggle Select All / Deselect All
     function toggleSelectAll() {
@@ -341,6 +410,8 @@
       });
       
       updateSelectAllButton();
+      // Auto-submit after toggling
+      submitFilters();
     }
 
     // Update Select All button text based on current state
@@ -367,10 +438,18 @@
     document.addEventListener('DOMContentLoaded', function() {
       updateSelectAllButton();
       
-      // Update select all button when checkboxes change
+      // Auto-submit when date inputs change
+      document.getElementById('startDate').addEventListener('change', submitFilters);
+      document.getElementById('endDate').addEventListener('change', submitFilters);
+      
+      // Auto-submit when format changes
+      document.getElementById('format').addEventListener('change', submitFilters);
+      
+      // Auto-submit when checkboxes change
       document.querySelectorAll('input[name="categories"][type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', function() {
           updateSelectAllButton();
+          submitFilters();
         });
       });
     });

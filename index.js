@@ -11,6 +11,11 @@ const express = require("express");
 //Needed for the session variable - Stored on the server to hold data
 const session = require("express-session");
 
+// Multer for file uploads (images)
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
 // Note: `path` and `body-parser` are not required for this minimal assignment; removed to simplify
 
 let app = express();
@@ -64,6 +69,45 @@ const knex = require("knex")({
 
 // Tells Express how to read form data sent in the body of a request
 app.use(express.urlencoded({extended: true}));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, "public", "uploads", "events");
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure Multer storage for event images
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename: timestamp-originalname
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        const basename = path.basename(file.originalname, ext);
+        cb(null, basename + '-' + uniqueSuffix + ext);
+    }
+});
+
+// File filter to only accept images
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+        return cb(null, true);
+    } else {
+        cb(new Error('Only image files (jpeg, jpg, png, gif) are allowed!'));
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: fileFilter
+});
 
 // Serve static files from public directory (for CSS, images, etc.)
 // This must come BEFORE authentication middleware so CSS/images load without login
@@ -123,6 +167,9 @@ app.get("/events", (req, res) => {
         "events.endtime",
         "events.eventlocation",
         "events.eventhost",
+        "events.eventurl",
+        "events.eventlinktext",
+        "events.eventimagepath",
         "events.eventtypeid",
         "eventtypes.eventtypename"
     )
@@ -165,7 +212,8 @@ app.get("/events", (req, res) => {
                     endDate: endDate || '',
                     categories: categories,
                     format: format
-                }
+                },
+                isLoggedIn: req.session.isLoggedIn || false
             });
         })
         .catch(err => {
@@ -179,7 +227,8 @@ app.get("/events", (req, res) => {
                     categories: [],
                     format: format
                 },
-                error_message: "Failed to load events." 
+                error_message: "Failed to load events.",
+                isLoggedIn: req.session.isLoggedIn || false
             });
         });
 });
@@ -226,9 +275,9 @@ app.get("/logout", (req, res) => {
 // ADMIN ROUTES - All require authentication
 // ============================================
 
-// Admin Dashboard - List all events
+// Admin Dashboard - List all events (separate upcoming and past)
 app.get("/admin/dashboard", (req, res) => {
-    // Query events with event type names
+    // Query all events with event type names and new fields
     knex.select(
         "events.eventid",
         "events.eventname",
@@ -236,6 +285,9 @@ app.get("/admin/dashboard", (req, res) => {
         "events.endtime",
         "events.eventlocation",
         "events.eventhost",
+        "events.eventurl",
+        "events.eventlinktext",
+        "events.eventimagepath",
         "eventtypes.eventtypename as typename"
     )
     .from("events")
@@ -243,11 +295,32 @@ app.get("/admin/dashboard", (req, res) => {
     .orderBy("events.starttime", "asc")
     .then(events => {
         // Ensure events is always an array
-        res.render("adminDashboard", { events: events || [] });
+        const allEvents = events || [];
+        const now = new Date();
+        
+        // Separate upcoming and past events
+        const upcomingEvents = allEvents.filter(event => {
+            if (!event.endtime) return false;
+            return new Date(event.endtime) > now;
+        });
+        
+        const pastEvents = allEvents.filter(event => {
+            if (!event.endtime) return false;
+            return new Date(event.endtime) <= now;
+        });
+        
+        res.render("adminDashboard", { 
+            upcomingEvents: upcomingEvents,
+            pastEvents: pastEvents
+        });
     })
     .catch(err => {
         console.error("Failed to load events:", err);
-        res.render("adminDashboard", { events: [], error_message: "Database error loading events." });
+        res.render("adminDashboard", { 
+            upcomingEvents: [], 
+            pastEvents: [],
+            error_message: "Database error loading events." 
+        });
     });
 });
 
@@ -267,9 +340,9 @@ app.get("/admin/create", (req, res) => {
         });
 });
 
-// Admin Create Event - Handle form submission
-app.post("/admin/create", (req, res) => {
-    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID } = req.body;
+// Admin Create Event - Handle form submission with file upload
+app.post("/admin/create", upload.single('eventimage'), (req, res) => {
+    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
     
     // Basic validation
     if (!eventName || !startTime || !endTime || !eventTypeID) {
@@ -312,6 +385,13 @@ app.post("/admin/create", (req, res) => {
             });
     }
     
+    // Handle image upload - get file path if uploaded
+    let imagePath = null;
+    if (req.file) {
+        // Store relative path from public directory
+        imagePath = '/uploads/events/' + req.file.filename;
+    }
+    
     knex("events")
         .insert({
             eventname: eventName.trim(),
@@ -320,13 +400,21 @@ app.post("/admin/create", (req, res) => {
             endtime: formattedEndTime,
             eventlocation: eventLocation ? eventLocation.trim() : null,
             eventhost: eventHost ? eventHost.trim() : null,
+            eventurl: eventurl ? eventurl.trim() : null,
+            eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
+            eventimagepath: imagePath,
             eventtypeid: parseInt(eventTypeID)
         })
         .then(() => {
+            console.log("Event created successfully with linktext:", eventlinktext);
             res.redirect("/admin/dashboard");
         })
         .catch(err => {
             console.error("Failed to create event:", err);
+            // Delete uploaded file if event creation failed
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
             // Reload form with error
             knex.select("eventtypeid", "eventtypename")
                 .from("eventtypes")
@@ -355,6 +443,8 @@ app.get("/admin/edit/:id", (req, res) => {
         if (!event) {
             return res.redirect("/admin/dashboard");
         }
+        // Debug: Log loaded event data
+        console.log("Loading event for edit - eventlinktext:", event.eventlinktext);
         // Ensure eventTypes is always an array
         res.render("adminEdit", { event: event, eventTypes: eventTypes || [] });
     })
@@ -364,10 +454,18 @@ app.get("/admin/edit/:id", (req, res) => {
     });
 });
 
-// Admin Edit Event - Handle form submission
-app.post("/admin/edit/:id", (req, res) => {
+// Admin Edit Event - Handle form submission with file upload
+app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
     const eventId = req.params.id;
-    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID } = req.body;
+    const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
+    
+    // Debug: Log the form data
+    console.log("Edit Event Form Data:", {
+        eventId,
+        eventurl,
+        eventlinktext,
+        allBody: req.body
+    });
     
     // Basic validation
     if (!eventName || !startTime || !endTime || !eventTypeID) {
@@ -422,22 +520,64 @@ app.post("/admin/edit/:id", (req, res) => {
         });
     }
     
-    knex("events")
-        .where("eventid", eventId)
-        .update({
-            eventname: eventName.trim(),
-            eventdescription: eventDescription ? eventDescription.trim() : null,
-            starttime: formattedStartTime,
-            endtime: formattedEndTime,
-            eventlocation: eventLocation ? eventLocation.trim() : null,
-            eventhost: eventHost ? eventHost.trim() : null,
-            eventtypeid: parseInt(eventTypeID)
-        })
-        .then(() => {
-            res.redirect("/admin/dashboard");
+    // Get current event to check for existing image
+    knex.select("*").from("events").where("eventid", eventId).first()
+        .then(event => {
+            if (!event) {
+                return res.redirect("/admin/dashboard");
+            }
+            
+            let imagePath = event.eventimagepath; // Keep existing image by default
+            
+            // If new image uploaded, replace old one
+            if (req.file) {
+                // Delete old image file if it exists
+                if (event.eventimagepath) {
+                    const oldImagePath = path.join(__dirname, "public", event.eventimagepath);
+                    if (fs.existsSync(oldImagePath)) {
+                        fs.unlinkSync(oldImagePath);
+                    }
+                }
+                // Store relative path from public directory
+                imagePath = '/uploads/events/' + req.file.filename;
+            }
+            
+            // Prepare update data
+            const updateData = {
+                eventname: eventName.trim(),
+                eventdescription: eventDescription ? eventDescription.trim() : null,
+                starttime: formattedStartTime,
+                endtime: formattedEndTime,
+                eventlocation: eventLocation ? eventLocation.trim() : null,
+                eventhost: eventHost ? eventHost.trim() : null,
+                eventurl: eventurl ? eventurl.trim() : null,
+                eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
+                eventimagepath: imagePath,
+                eventtypeid: parseInt(eventTypeID)
+            };
+            
+            // Debug: Log update data
+            console.log("Updating event with data:", updateData);
+            
+            // Update event with new data
+            return knex("events")
+                .where("eventid", eventId)
+                .update(updateData)
+                .then((rowsUpdated) => {
+                    console.log("Event updated successfully. Rows affected:", rowsUpdated);
+                    res.redirect("/admin/dashboard");
+                })
+                .catch((updateErr) => {
+                    console.error("Database update error:", updateErr);
+                    throw updateErr;
+                });
         })
         .catch(err => {
             console.error("Failed to update event:", err);
+            // Delete uploaded file if event update failed
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
             // Reload edit form with error
             Promise.all([
                 knex.select("*").from("events").where("eventid", eventId).first(),
