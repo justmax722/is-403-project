@@ -42,8 +42,9 @@
 
 ### Required Tables:
 1. **users** table
-   - `username` (string)
+   - `email` (string, unique)
    - `password` (string)
+   - `role` (char(1), values 'A' for admin or 'S' for submitter)
 
 2. **events** table
    - `eventid` (primary key)

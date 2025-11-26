@@ -77,7 +77,7 @@ Open your browser and navigate to:
 - **Public Events:** http://localhost:3000/events
 
 ### Default Login Credentials:
-- **Username:** `justmax`
+- **Email:** `jmaximum72@gmail.com`
 - **Password:** `admin`
 
 ⚠️ **IMPORTANT:** Change the default password in production!

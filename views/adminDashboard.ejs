@@ -242,6 +242,21 @@
       border-bottom-color: #667eea;
     }
 
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #dc3545;
+      color: white;
+      font-size: 0.75em;
+      font-weight: 600;
+      min-width: 24px;
+      text-align: center;
+    }
+
     .tab-content {
       display: none;
     }
@@ -252,6 +267,7 @@
   </style>
 </head>
 <body>
+  <% const pendingBadgeCount = typeof pendingCount === 'number' ? pendingCount : 0; %>
   <div class="header">
     <h1>IS Event Calendar - Admin</h1>
     <div class="header-nav">
@@ -269,8 +285,14 @@
     <!-- Tabs -->
     <div class="tabs-container">
       <div class="tabs">
-        <button class="tab-button active" onclick="switchTab('upcoming')">Upcoming Events</button>
-        <button class="tab-button" onclick="switchTab('past')">Past Events</button>
+        <button class="tab-button active" onclick="switchTab('upcoming', this)">Upcoming Events</button>
+        <button class="tab-button" onclick="switchTab('past', this)">Past Events</button>
+        <button class="tab-button" onclick="switchTab('submitted', this)">
+          Submitted Events
+          <% if (pendingBadgeCount > 0) { %>
+            <span class="tab-badge"><%= pendingBadgeCount %></span>
+          <% } %>
+        </button>
       </div>
     </div>
 
@@ -364,10 +386,93 @@
         </table>
       </div>
     </div>
+    <div id="submitted-events" class="tab-content">
+      <div style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 12px; color: #333;">Pending Submissions</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Type</th>
+                <th>Submitted By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (pendingSubmissions && pendingSubmissions.length > 0) { %>
+                <% pendingSubmissions.forEach(submission => { %>
+                  <tr>
+                    <td><strong><%= submission.eventname %></strong></td>
+                    <td><%= submission.starttime ? new Date(submission.starttime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
+                    <td><%= submission.endtime ? new Date(submission.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
+                    <td><%= submission.typename || 'N/A' %></td>
+                    <td><%= submission.submitterEmail || 'N/A' %></td>
+                    <td class="actions-cell">
+                      <form action="/admin/submissions/<%= submission.submissionid %>/approve" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-edit">Approve</button>
+                      </form>
+                      <form action="/admin/submissions/<%= submission.submissionid %>/deny" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-danger" onclick="return confirm('Deny this submission?');">Deny</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="empty-state">
+                    <p>No pending submissions at the moment.</p>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom: 12px; color: #333;">Denied Submissions</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Type</th>
+                <th>Submitted By</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (deniedSubmissions && deniedSubmissions.length > 0) { %>
+                <% deniedSubmissions.forEach(submission => { %>
+                  <tr>
+                    <td><strong><%= submission.eventname %></strong></td>
+                    <td><%= submission.starttime ? new Date(submission.starttime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
+                    <td><%= submission.endtime ? new Date(submission.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
+                    <td><%= submission.typename || 'N/A' %></td>
+                    <td><%= submission.submitterEmail || 'N/A' %></td>
+                    <td><%= submission.status %></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="empty-state">
+                    <p>No denied submissions yet.</p>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    function switchTab(tabName) {
+    function switchTab(tabName, button) {
       // Hide all tab contents
       document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
@@ -380,9 +485,10 @@
       
       // Show selected tab content
       document.getElementById(tabName + '-events').classList.add('active');
-      
-      // Add active class to clicked button
-      event.target.classList.add('active');
+
+      if (button) {
+        button.classList.add('active');
+      }
     }
   </script>
 </body>

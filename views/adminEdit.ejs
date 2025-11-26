@@ -242,8 +242,8 @@
         </div>
 
         <div class="form-group">
-          <label for="eventLocation">Location</label>
-          <input type="text" id="eventLocation" name="eventLocation" value="<%= event.eventlocation || '' %>" placeholder="Enter event location (optional)">
+          <label for="eventLocation">Location <span style="color: #dc3545;">*</span></label>
+          <input type="text" id="eventLocation" name="eventLocation" value="<%= event.eventlocation || '' %>" required placeholder="Enter event location">
         </div>
 
         <div class="form-group">

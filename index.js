@@ -16,6 +16,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+const formatDateTimeLocal = (datetimeLocal) => {
+    if (!datetimeLocal) return null;
+    return datetimeLocal.replace('T', ' ') + ':00';
+};
+
 // Note: `path` and `body-parser` are not required for this minimal assignment; removed to simplify
 
 let app = express();
@@ -117,48 +122,44 @@ app.use(express.static("public"));
 // Note: Static files are served by express.static above, so CSS/images load without auth
 // If a static file doesn't exist, express.static calls next() and the request continues here
 app.use((req, res, next) => {
-    // Skip authentication for public routes
-    if (req.path === '/' || req.path === '/login' || req.path === '/logout' || req.path === '/events') {
-        //continue with the request path
+    const publicRoutes = ['/', '/login', '/logout', '/events', '/signup', '/submit-event'];
+    if (publicRoutes.includes(req.path)) {
         return next();
     }
-    
-    // Check if user is logged in for all other routes (including /admin/*)
-    if (req.session.isLoggedIn) {
-        //notice no return because nothing below it
-        next(); // User is logged in, continue
-    } 
-    else {
-        res.render("login", { error_message: "Please log in to access this page" });
+
+    const isSubmitterRoute = req.path.startsWith("/submitter");
+    if (isSubmitterRoute && req.session.userRole === "submitter" && req.session.submitterId) {
+        return next();
     }
+
+    if (req.session.isLoggedIn) {
+        return next();
+    }
+
+    renderLoginView(res, { loginError: "Please log in to access this page" });
 });
 
-// Main page route - redirect to admin dashboard if logged in, otherwise show login
-app.get("/", (req, res) => {
-    // Check if user is logged in
-    if (req.session.isLoggedIn) {
-        // Redirect to admin dashboard
-        res.redirect("/admin/dashboard");
-    } 
-    else {
-        res.render("login", { error_message: "" });
-    }
-});
+const renderLoginView = (res, { loginError = '', signupError = '', activeForm = 'login' } = {}) => {
+    res.render("login", {
+        error_message: loginError,
+        signup_error_message: signupError,
+        activeForm
+    });
+};
 
-// Public events page - no login required
-app.get("/events", (req, res) => {
-    // Get filter parameters from query string
+const handleEventsPage = (req, res) => {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
     const categories = req.query.categories ? (Array.isArray(req.query.categories) ? req.query.categories : [req.query.categories]) : [];
     const format = req.query.format || 'grid';
-    
-    // Query event types for category filter
+    const searchTerm = req.query.search ? req.query.search.trim() : '';
+    const sortDirection = req.query.sort === 'desc' ? 'desc' : 'asc';
+    const userRole = req.session.userRole || '';
+
     const eventTypesQuery = knex.select("eventtypeid", "eventtypename")
         .from("eventtypes")
         .orderBy("eventtypename", "asc");
-    
-    // Build events query
+
     let eventsQuery = knex.select(
         "events.eventid",
         "events.eventname",
@@ -175,33 +176,31 @@ app.get("/events", (req, res) => {
     )
     .from("events")
     .leftJoin("eventtypes", "events.eventtypeid", "eventtypes.eventtypeid")
-    .where("events.endtime", ">", knex.fn.now()); // Only show future events
-    
-    // Apply date filters
-    // If only startDate is provided, show events from that date onward
-    // If only endDate is provided, show events up to that date
-    // If both are provided, show events within that range
+    .where("events.endtime", ">", knex.fn.now());
+
     if (startDate && endDate) {
-        // Date range: events that overlap with the selected range
-        // An event overlaps if: event starts before range ends AND event ends after range starts
         eventsQuery = eventsQuery.where("events.starttime", "<=", endDate + " 23:59:59")
                                   .where("events.endtime", ">=", startDate + " 00:00:00");
     } else if (startDate) {
-        // Only start date: show events that end on or after this date
         eventsQuery = eventsQuery.where("events.endtime", ">=", startDate + " 00:00:00");
     } else if (endDate) {
-        // Only end date: show events that start on or before this date
         eventsQuery = eventsQuery.where("events.starttime", "<=", endDate + " 23:59:59");
     }
-    
-    // Apply category filters
+
     if (categories.length > 0) {
         eventsQuery = eventsQuery.whereIn("events.eventtypeid", categories.map(id => parseInt(id)));
     }
-    
-    eventsQuery = eventsQuery.orderBy("events.starttime", "asc");
-    
-    // Execute both queries
+
+    if (searchTerm) {
+        const searchPattern = `%${searchTerm}%`;
+        eventsQuery = eventsQuery.where(function() {
+            this.where("events.eventname", "ilike", searchPattern)
+                .orWhere("events.eventdescription", "ilike", searchPattern);
+        });
+    }
+
+    eventsQuery = eventsQuery.orderBy("events.starttime", sortDirection);
+
     Promise.all([eventTypesQuery, eventsQuery])
         .then(([eventTypes, events]) => {
             res.render("events", { 
@@ -211,9 +210,13 @@ app.get("/events", (req, res) => {
                     startDate: startDate || '',
                     endDate: endDate || '',
                     categories: categories,
-                    format: format
+                    format: format,
+                    search: searchTerm,
+                    sort: sortDirection
                 },
-                isLoggedIn: req.session.isLoggedIn || false
+                isLoggedIn: req.session.isLoggedIn || false,
+                currentUrl: req.originalUrl,
+                userRole
             });
         })
         .catch(err => {
@@ -225,50 +228,310 @@ app.get("/events", (req, res) => {
                     startDate: '',
                     endDate: '',
                     categories: [],
-                    format: format
+                    format: format,
+                    search: searchTerm,
+                    sort: sortDirection
                 },
                 error_message: "Failed to load events.",
-                isLoggedIn: req.session.isLoggedIn || false
+                isLoggedIn: req.session.isLoggedIn || false,
+                currentUrl: req.originalUrl,
+                userRole
             });
         });
+};
+
+app.get("/", handleEventsPage);
+app.get("/login", (req, res) => {
+    renderLoginView(res);
 });
 
-// This creates attributes in the session object to keep track of user and if they logged in
-app.post("/login", (req, res) => {
-    let sName = req.body.username;
-    let sPassword = req.body.password;
-    
-    knex.select("username", "password")
-    .from('users')
-    .where("username", sName)
-    .andWhere("password", sPassword)
-    .then(users => {
-      // Check if a user was found with matching username AND password
-      if (users.length > 0) {
-        req.session.isLoggedIn = true;
-        req.session.username = sName;
-        res.redirect("/admin/dashboard");
-      } else {
-        // No matching user found
-        res.render("login", { error_message: "Invalid login" });
-      }
-    })
-    .catch(err => {
-      console.error("Login error:", err);
-      res.render("login", { error_message: "Invalid login" });
-    });
+app.get("/events", handleEventsPage);
 
+// This creates attributes in the session object to keep track of user and if they logged in
+app.post("/login", async (req, res) => {
+    const emailInput = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+
+    if (!emailInput || !password) {
+        return renderLoginView(res, {
+            loginError: "Please enter both email and password.",
+            activeForm: "login"
+        });
+    }
+
+    try {
+        const adminUser = await knex("users")
+            .select("id", "email")
+            .where({
+                role: 'A',
+                email: emailInput,
+                password
+            })
+            .first();
+
+        if (adminUser) {
+            req.session.isLoggedIn = true;
+            req.session.userEmail = adminUser.email;
+            req.session.userRole = "admin";
+            return res.redirect("/admin/dashboard");
+        }
+
+        const submitter = await knex("users")
+            .select("id", "email")
+            .where({
+                role: 'S',
+                email: emailInput,
+                password
+            })
+            .first();
+
+        if (submitter) {
+            req.session.submitterId = submitter.id;
+            req.session.submitterEmail = submitter.email;
+            req.session.userRole = "submitter";
+            return res.redirect("/submitter/dashboard");
+        }
+
+        renderLoginView(res, {
+            loginError: "Invalid login",
+            activeForm: "login"
+        });
+    } catch (err) {
+        console.error("Login error:", err);
+        renderLoginView(res, {
+            loginError: "Invalid login",
+            activeForm: "login"
+        });
+    }
 });
 
 // Logout route
 app.get("/logout", (req, res) => {
-    // Get rid of the session object
+    const requestedReturn = typeof req.query.next === 'string' ? req.query.next : '';
+    const redirectTarget = requestedReturn.startsWith('/') ? requestedReturn : '/';
     req.session.destroy((err) => {
         if (err) {
             console.log(err);
         }
-        res.redirect("/");
+        res.redirect(redirectTarget);
     });
+});
+
+app.get("/signup", (req, res) => {
+    renderLoginView(res, { activeForm: "signup" });
+});
+
+app.post("/signup", async (req, res) => {
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+    const confirmPassword = req.body.confirmPassword;
+
+    if (!email || !password || !confirmPassword) {
+        return renderLoginView(res, {
+            signupError: "All fields are required.",
+            activeForm: "signup"
+        });
+    }
+
+    if (password !== confirmPassword) {
+        return renderLoginView(res, {
+            signupError: "Passwords do not match.",
+            activeForm: "signup"
+        });
+    }
+
+    try {
+        const existing = await knex("users")
+            .where("email", email)
+            .first();
+
+        if (existing) {
+            throw new Error("That email is already registered.");
+        }
+
+        const insertedRows = await knex("users")
+            .insert({
+                email: email,
+                password: password,
+                role: 'S'
+            })
+            .returning("id");
+
+        const newUser = insertedRows[0];
+
+        if (!newUser || typeof newUser.id === 'undefined') {
+            throw new Error("Unable to create account.");
+        }
+
+        req.session.submitterId = newUser.id;
+        req.session.submitterEmail = email;
+        req.session.userRole = "submitter";
+        res.redirect("/submit-event");
+    } catch (err) {
+        console.error("Signup error:", err.message || err);
+        renderLoginView(res, {
+            signupError: err.message || "Unable to create account.",
+            activeForm: "signup"
+        });
+    }
+});
+
+const loadSubmitEventData = (submitterId) => {
+    const eventTypesPromise = knex.select("eventtypeid", "eventtypename")
+        .from("eventtypes")
+        .orderBy("eventtypename", "asc");
+
+    const submissionsPromise = knex.select(
+        "submissionid",
+        "eventname",
+        "status",
+        "created_at",
+        "starttime",
+        "endtime",
+        "eventtypeid"
+    )
+    .from("event_submissions")
+    .where("submitterid", submitterId)
+    .orderBy("created_at", "desc");
+
+    return Promise.all([eventTypesPromise, submissionsPromise]);
+};
+
+const renderSubmitEvent = (req, res, { success_message = '', error_message = '', formData = {} } = {}) => {
+    if (!req.session.submitterId) {
+        return res.redirect("/signup");
+    }
+
+    const userRoleValue = req.session.userRole || '';
+    loadSubmitEventData(req.session.submitterId)
+        .then(([eventTypes, submissions]) => {
+            res.render("submitEvent", {
+                eventTypes: eventTypes || [],
+                submissions: submissions || [],
+                success_message,
+                error_message,
+                formData,
+                userRole: userRoleValue
+            });
+        })
+        .catch(err => {
+            console.error("Failed to load submit-event data:", err);
+            res.render("submitEvent", {
+                eventTypes: [],
+                submissions: [],
+                success_message: '',
+                error_message: "Unable to load event types. Please try again later.",
+                formData,
+                userRole: userRoleValue
+            });
+        });
+};
+
+app.get("/submit-event", (req, res) => {
+    if (!req.session.submitterId) {
+        return res.redirect("/signup");
+    }
+
+    const successMessage = req.query.success ? "Thanks! We'll review your submission shortly." : '';
+    renderSubmitEvent(req, res, { success_message: successMessage });
+});
+
+app.post("/submit-event", (req, res) => {
+    if (!req.session.submitterId) {
+        return res.redirect("/signup");
+    }
+
+    const {
+        eventName,
+        eventDescription,
+        startTime,
+        endTime,
+        eventLocation,
+        eventHost,
+        eventTypeID,
+        eventURL,
+        eventLinkText
+    } = req.body;
+
+    const formattedStart = formatDateTimeLocal(startTime);
+    const formattedEnd = formatDateTimeLocal(endTime);
+
+    const cleanedLocation = eventLocation ? eventLocation.trim() : '';
+
+    const preservedFormData = {
+        eventName: eventName ? eventName.trim() : '',
+        eventDescription: eventDescription ? eventDescription.trim() : '',
+        startTime,
+        endTime,
+        eventLocation: cleanedLocation,
+        eventHost: eventHost ? eventHost.trim() : '',
+        eventTypeID,
+        eventURL: eventURL ? eventURL.trim() : '',
+        eventLinkText: eventLinkText ? eventLinkText.trim() : ''
+    };
+
+    const renderWithError = (message) => {
+        renderSubmitEvent(req, res, {
+            error_message: message,
+            formData: preservedFormData
+        });
+    };
+    if (!eventName || !eventDescription || !formattedStart || !formattedEnd || !eventTypeID || !cleanedLocation) {
+        return renderWithError("Please fill in all required fields (Event Name, Start Time, End Time, Location, Event Type).");
+    }
+
+    if (new Date(formattedEnd) <= new Date(formattedStart)) {
+        return renderWithError("End time must be after start time.");
+    }
+
+    const submissionData = {
+        eventname: eventName.trim(),
+        eventdescription: eventDescription.trim(),
+        starttime: formattedStart,
+        endtime: formattedEnd,
+        eventlocation: cleanedLocation,
+        eventhost: eventHost ? eventHost.trim() : null,
+        eventurl: eventURL ? eventURL.trim() : null,
+        eventlinktext: eventLinkText ? eventLinkText.trim() : null,
+        eventtypeid: parseInt(eventTypeID, 10),
+        submitterid: req.session.submitterId,
+        status: 'pending'
+    };
+
+    knex("event_submissions")
+        .insert(submissionData)
+        .then(() => {
+            res.redirect("/submitter/dashboard?success=1");
+        })
+        .catch(err => {
+            console.error("Failed to save submission:", err);
+            renderWithError("Unable to submit your event. Please try again later.");
+        });
+});
+
+app.get("/submitter/dashboard", (req, res) => {
+    if (!req.session.submitterId) {
+        return res.redirect("/login");
+    }
+
+    loadSubmitEventData(req.session.submitterId)
+        .then(([, submissions]) => {
+            res.render("submitterDashboard", {
+                submissions: submissions || [],
+                submitterEmail: req.session.submitterEmail || '',
+                success_message: req.query.success ? "Thanks! We'll review your submission shortly." : '',
+                error_message: ''
+            });
+        })
+        .catch(err => {
+            console.error("Failed to load submitter dashboard:", err);
+            res.render("submitterDashboard", {
+                submissions: [],
+                submitterEmail: req.session.submitterEmail || '',
+                error_message: "Unable to load your submissions right now.",
+                success_message: ''
+            });
+        });
 });
 
 // ============================================
@@ -277,8 +540,7 @@ app.get("/logout", (req, res) => {
 
 // Admin Dashboard - List all events (separate upcoming and past)
 app.get("/admin/dashboard", (req, res) => {
-    // Query all events with event type names and new fields
-    knex.select(
+    const eventsQuery = knex.select(
         "events.eventid",
         "events.eventname",
         "events.starttime",
@@ -292,36 +554,133 @@ app.get("/admin/dashboard", (req, res) => {
     )
     .from("events")
     .leftJoin("eventtypes", "events.eventtypeid", "eventtypes.eventtypeid")
-    .orderBy("events.starttime", "asc")
-    .then(events => {
-        // Ensure events is always an array
-        const allEvents = events || [];
-        const now = new Date();
-        
-        // Separate upcoming and past events
-        const upcomingEvents = allEvents.filter(event => {
-            if (!event.endtime) return false;
-            return new Date(event.endtime) > now;
+    .orderBy("events.starttime", "asc");
+
+    const submissionColumns = [
+        "event_submissions.submissionid",
+        "event_submissions.eventname",
+        "event_submissions.starttime",
+        "event_submissions.endtime",
+        "event_submissions.eventlocation",
+        "event_submissions.eventhost",
+        "event_submissions.eventurl",
+        "event_submissions.eventlinktext",
+        "event_submissions.status",
+        "event_submissions.created_at",
+        "eventtypes.eventtypename as typename",
+        "users.email as submitterEmail"
+    ];
+
+    const pendingSubmissionsQuery = knex("event_submissions")
+        .select(submissionColumns)
+        .leftJoin("eventtypes", "event_submissions.eventtypeid", "eventtypes.eventtypeid")
+        .leftJoin("users", "event_submissions.submitterid", "users.id")
+        .where("event_submissions.status", "pending")
+        .orderBy("event_submissions.created_at", "asc");
+
+    const deniedSubmissionsQuery = knex("event_submissions")
+        .select(submissionColumns)
+        .leftJoin("eventtypes", "event_submissions.eventtypeid", "eventtypes.eventtypeid")
+        .leftJoin("users", "event_submissions.submitterid", "users.id")
+        .where("event_submissions.status", "denied")
+        .orderBy("event_submissions.created_at", "desc");
+
+    Promise.all([eventsQuery, pendingSubmissionsQuery, deniedSubmissionsQuery])
+        .then(([events, pendingSubmissions, deniedSubmissions]) => {
+            const allEvents = events || [];
+            const now = new Date();
+            const pendingCount = (pendingSubmissions || []).length;
+
+            const upcomingEvents = allEvents.filter(event => {
+                if (!event.endtime) return false;
+                return new Date(event.endtime) > now;
+            });
+
+            const pastEvents = allEvents.filter(event => {
+                if (!event.endtime) return false;
+                return new Date(event.endtime) <= now;
+            });
+
+            res.render("adminDashboard", {
+                upcomingEvents: upcomingEvents,
+                pastEvents: pastEvents,
+                pendingSubmissions: pendingSubmissions || [],
+                deniedSubmissions: deniedSubmissions || [],
+                pendingCount
+            });
+        })
+        .catch(err => {
+            console.error("Failed to load events or submissions:", err);
+            res.render("adminDashboard", {
+                upcomingEvents: [],
+                pastEvents: [],
+                pendingSubmissions: [],
+                deniedSubmissions: [],
+                error_message: "Database error loading events."
+            });
         });
-        
-        const pastEvents = allEvents.filter(event => {
-            if (!event.endtime) return false;
-            return new Date(event.endtime) <= now;
+});
+
+app.post("/admin/submissions/:id/approve", (req, res) => {
+    const submissionId = parseInt(req.params.id, 10);
+    if (isNaN(submissionId)) {
+        return res.redirect("/admin/dashboard");
+    }
+
+    knex("event_submissions")
+        .where("submissionid", submissionId)
+        .first()
+        .then(submission => {
+            if (!submission || submission.status !== 'pending') {
+                throw new Error("Submission not available for approval.");
+            }
+
+            const eventData = {
+                eventname: submission.eventname,
+                eventdescription: submission.eventdescription,
+                starttime: submission.starttime,
+                endtime: submission.endtime,
+                eventlocation: submission.eventlocation,
+                eventhost: submission.eventhost,
+                eventurl: submission.eventurl,
+                eventlinktext: submission.eventlinktext,
+                eventimagepath: null,
+                eventtypeid: submission.eventtypeid
+            };
+
+            return knex("events")
+                .insert(eventData);
+        })
+        .then(() => {
+            return knex("event_submissions")
+                .where("submissionid", submissionId)
+                .update({ status: 'approved' });
+        })
+        .then(() => {
+            res.redirect("/admin/dashboard");
+        })
+        .catch(err => {
+            console.error("Approve submission error:", err);
+            res.redirect("/admin/dashboard");
         });
-        
-        res.render("adminDashboard", { 
-            upcomingEvents: upcomingEvents,
-            pastEvents: pastEvents
+});
+
+app.post("/admin/submissions/:id/deny", (req, res) => {
+    const submissionId = parseInt(req.params.id, 10);
+    if (isNaN(submissionId)) {
+        return res.redirect("/admin/dashboard");
+    }
+
+    knex("event_submissions")
+        .where("submissionid", submissionId)
+        .update({ status: 'denied' })
+        .then(() => {
+            res.redirect("/admin/dashboard");
+        })
+        .catch(err => {
+            console.error("Deny submission error:", err);
+            res.redirect("/admin/dashboard");
         });
-    })
-    .catch(err => {
-        console.error("Failed to load events:", err);
-        res.render("adminDashboard", { 
-            upcomingEvents: [], 
-            pastEvents: [],
-            error_message: "Database error loading events." 
-        });
-    });
 });
 
 // Admin Create Event - Show form
@@ -332,26 +691,40 @@ app.get("/admin/create", (req, res) => {
         .orderBy("eventtypename", "asc")
         .then(eventTypes => {
             // Ensure eventTypes is always an array
-            res.render("adminCreate", { eventTypes: eventTypes || [] });
+            res.render("adminCreate", { eventTypes: eventTypes || [], formData: {} });
         })
         .catch(err => {
             console.error("Failed to load event types:", err);
-            res.render("adminCreate", { eventTypes: [], error_message: "Database error loading event types." });
+            res.render("adminCreate", { eventTypes: [], error_message: "Database error loading event types.", formData: {} });
         });
 });
 
 // Admin Create Event - Handle form submission with file upload
 app.post("/admin/create", upload.single('eventimage'), (req, res) => {
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
+    const locationValue = eventLocation ? eventLocation.trim() : '';
     
+    const formData = {
+        eventName: eventName ? eventName.trim() : '',
+        eventDescription: eventDescription ? eventDescription.trim() : '',
+        startTime,
+        endTime,
+        eventLocation: locationValue,
+        eventHost: eventHost ? eventHost.trim() : '',
+        eventTypeID,
+        eventurl: eventurl ? eventurl.trim() : '',
+        eventlinktext: eventlinktext ? eventlinktext.trim() : ''
+    };
+
     // Basic validation
-    if (!eventName || !startTime || !endTime || !eventTypeID) {
+    if (!eventName || !startTime || !endTime || !eventTypeID || !locationValue) {
         return knex.select("eventtypeid", "eventtypename")
             .from("eventtypes")
             .then(eventTypes => {
                 res.render("adminCreate", { 
                     eventTypes: eventTypes || [], 
-                    error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Event Type)." 
+                    error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Location, Event Type).",
+                    formData
                 });
             })
             .catch(() => {
@@ -377,7 +750,8 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
             .then(eventTypes => {
                 res.render("adminCreate", { 
                     eventTypes: eventTypes || [], 
-                    error_message: "End time must be after start time." 
+                    error_message: "End time must be after start time.",
+                    formData
                 });
             })
             .catch(() => {
@@ -398,7 +772,7 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
             eventdescription: eventDescription ? eventDescription.trim() : null,
             starttime: formattedStartTime,
             endtime: formattedEndTime,
-            eventlocation: eventLocation ? eventLocation.trim() : null,
+                eventlocation: locationValue || null,
             eventhost: eventHost ? eventHost.trim() : null,
             eventurl: eventurl ? eventurl.trim() : null,
             eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
@@ -421,7 +795,8 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
                 .then(eventTypes => {
                     res.render("adminCreate", { 
                         eventTypes: eventTypes || [], 
-                        error_message: "Failed to create event. Please check your input and try again. Error: " + (err.message || "Unknown error")
+                            error_message: "Failed to create event. Please check your input and try again. Error: " + (err.message || "Unknown error"),
+                            formData
                     });
                 })
                 .catch(() => {
@@ -458,6 +833,7 @@ app.get("/admin/edit/:id", (req, res) => {
 app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
     const eventId = req.params.id;
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
+    const locationValue = eventLocation ? eventLocation.trim() : '';
     
     // Debug: Log the form data
     console.log("Edit Event Form Data:", {
@@ -468,7 +844,7 @@ app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
     });
     
     // Basic validation
-    if (!eventName || !startTime || !endTime || !eventTypeID) {
+    if (!eventName || !startTime || !endTime || !eventTypeID || !locationValue) {
         // Reload edit form with error
         return Promise.all([
             knex.select("*").from("events").where("eventid", eventId).first(),
@@ -481,7 +857,7 @@ app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
             res.render("adminEdit", { 
                 event: event, 
                 eventTypes: eventTypes || [], 
-                error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Event Type)." 
+                error_message: "Please fill in all required fields (Event Name, Start Time, End Time, Location, Event Type)." 
             });
         })
         .catch(() => {
@@ -548,7 +924,7 @@ app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
                 eventdescription: eventDescription ? eventDescription.trim() : null,
                 starttime: formattedStartTime,
                 endtime: formattedEndTime,
-                eventlocation: eventLocation ? eventLocation.trim() : null,
+                eventlocation: locationValue || null,
                 eventhost: eventHost ? eventHost.trim() : null,
                 eventurl: eventurl ? eventurl.trim() : null,
                 eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
