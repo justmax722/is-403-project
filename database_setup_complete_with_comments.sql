@@ -12,7 +12,7 @@
 -- 5. Execute (F5 or click Execute)
 --
 -- Default Login Credentials:
--- Username: justmax
+-- Email: jmaximum72@gmail.com
 -- Password: admin
 -- IMPORTANT: Change this password in production!
 -- ============================================
@@ -22,9 +22,14 @@
 -- ============================================
 -- WARNING: This will delete ALL existing data in these tables!
 -- Run this script on a fresh database or backup your data first.
+DROP TABLE IF EXISTS event_submissions CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 DROP TABLE IF EXISTS eventtypes CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+-- NOTE: When migrating from the older schema that split out submitters, copy any
+-- existing submitter rows into this new `users` table (email/password pairs with
+-- role = 'S') before running the script so their submissions keep working.
 
 -- ============================================
 -- Create EventTypes Table
@@ -68,14 +73,48 @@ CREATE TABLE events (
 -- ============================================
 -- Create Users Table
 -- ============================================
--- This table stores admin user credentials for authentication.
--- Passwords are stored as plain text (for simplicity - change in production!)
--- In production, you should hash passwords using bcrypt or similar.
+-- This table now stores both admin and submitter credentials.
+-- Everybody logs in via their email address; `role` marks admins ("A")
+-- versus submitters ("S").
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,                -- Auto-incrementing primary key
-    username VARCHAR(50) NOT NULL UNIQUE, -- Username (must be unique)
-    password VARCHAR(50) NOT NULL         -- Password (plain text - change in production!)
+    id SERIAL PRIMARY KEY,                        -- Auto-incrementing primary key
+    email VARCHAR(255) NOT NULL UNIQUE,           -- Email (lower case preferred)
+    password VARCHAR(255) NOT NULL,               -- Password (plain text - change in production!)
+    role CHAR(1) NOT NULL DEFAULT 'S',            -- 'A' = admin, 'S' = submitter
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),  -- Audit for when the record was created
+    CONSTRAINT chk_user_role CHECK (role IN ('A', 'S'))
 );
+
+-- ============================================
+-- Create Event Submissions Table
+-- ============================================
+-- Stores rough drafts of submitted events so admins can review them before publishing.
+CREATE TABLE event_submissions (
+    submissionid SERIAL PRIMARY KEY,
+    eventname VARCHAR(200) NOT NULL,
+    eventdescription TEXT,
+    starttime TIMESTAMP NOT NULL,
+    endtime TIMESTAMP NOT NULL,
+    eventlocation VARCHAR(200),
+    eventhost VARCHAR(200),
+    eventurl VARCHAR(500),
+    eventlinktext VARCHAR(200),
+    eventtypeid INTEGER NOT NULL,
+    submitterid INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_submission_eventtype FOREIGN KEY (eventtypeid)
+        REFERENCES eventtypes(eventtypeid)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_submission_submitter FOREIGN KEY (submitterid)
+        REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_event_submissions_status ON event_submissions(status);
+CREATE INDEX idx_event_submissions_submitter ON event_submissions(submitterid);
 
 -- ============================================
 -- Create Indexes for Performance
@@ -105,13 +144,13 @@ INSERT INTO eventtypes (eventtypename) VALUES ('Other') ON CONFLICT (eventtypena
 -- Insert Default Admin User
 -- ============================================
 -- Default credentials for admin access:
--- Username: justmax
+-- Email: admin@example.com
 -- Password: admin
 -- 
 -- IMPORTANT: Change this password before deploying to production!
 -- To add more users, use:
--- INSERT INTO users (username, password) VALUES ('username', 'password');
-INSERT INTO users (username, password) VALUES ('justmax', 'admin');
+-- INSERT INTO users (email, password, role) VALUES ('you@example.com', 'password', 'A');
+INSERT INTO users (email, password, role) VALUES ('jmaximum72@gmail.com', 'admin', 'A');
 
 -- ============================================
 -- Verification Queries (Optional)
@@ -148,7 +187,7 @@ INSERT INTO users (username, password) VALUES ('justmax', 'admin');
 -- 1. Update your .env file with database connection details
 -- 2. Start your Node.js server (node index.js)
 -- 3. Login at http://localhost:3000 with:
---    Username: justmax
+--    Email: jmaximum72@gmail.com
 --    Password: admin
 -- 4. Create your first event!
 --

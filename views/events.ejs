@@ -67,11 +67,6 @@
       background: #f4f4f4;
       padding: 20px;
       border-right: 1px solid #ddd;
-      position: sticky;
-      top: 0;
-      height: calc(100vh - 72px);
-      overflow-y: auto;
-      align-self: flex-start;
     }
 
     .sidebar h3 {
@@ -108,27 +103,70 @@
       background: #5568d3;
     }
 
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 999px;
+      font-size: 0.95em;
+      outline: none;
+      background: #fff;
+    }
+
+    .search-bar .search-submit {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border 0.2s ease, background 0.2s ease;
+      padding: 0;
+      margin: 0;
+      font-size: 0;
+      box-shadow: none;
+    }
+
+    .search-submit:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+    }
+
+    .search-submit svg {
+      width: 18px;
+      height: 18px;
+      fill: #667eea;
+    }
+
     .category-checkboxes {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 8px;
-      background: white;
-      margin-top: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
     }
 
     .category-checkboxes label {
       display: flex;
       align-items: center;
-      margin-top: 8px;
-      font-weight: normal;
+      gap: 10px;
+      font-weight: 500;
       cursor: pointer;
+      color: #2f2f5c;
     }
 
     .category-checkboxes input[type="checkbox"] {
       width: auto;
-      margin-right: 8px;
-      margin-top: 0;
+      margin: 0;
+      accent-color: #667eea;
     }
 
     .content {
@@ -238,7 +276,7 @@
     }
 
     .filter-actions {
-      margin-top: 15px;
+      margin-top: 12px;
     }
 
     .filter-actions button {
@@ -246,21 +284,108 @@
     }
 
     .clear-filters {
-      background: #dc3545 !important;
+      background: #9496a1 !important;
+      border: 1px solid #2f3035;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 6px 14px;
+      box-shadow: none;
+      width: auto;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .clear-filters:hover {
-      background: #c82333 !important;
+      background: #dde2ff !important;
+      border-color: #9198d5;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .toolbar-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-label {
+      font-weight: 700;
+      font-size: 0.75em;
+      letter-spacing: 0.1em;
+      color: #5a5a5a;
+    }
+
+    .toolbar-btn {
+      border: 1px solid #d3d6df;
+      border-radius: 999px;
+      padding: 6px 18px;
+      background: #fff;
+      color: #444;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+
+    .toolbar-btn:hover {
+      border-color: #667eea;
+      color: #1f1f3f;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .toolbar-btn.active {
+      background: #667eea;
+      border-color: #5c6bd6;
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.35);
+    }
+
+    .submit-divider {
+      margin-top: 40px;
+      border: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .submit-prompt {
+      margin-top: 12px;
+      font-size: 0.95em;
+      color: #2f2f5c;
+      text-align: center;
+    }
+
+    .submit-prompt a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .submit-prompt a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
+  <% 
+    const logoutReturnUrl = typeof currentUrl === 'string' ? currentUrl : '/events'; 
+    const userRoleValue = typeof userRole !== 'undefined' ? userRole : '';
+    const submitTarget = userRoleValue === 'admin' ? '/admin/dashboard' : (userRoleValue === 'submitter' ? '/submit-event' : '/signup');
+  %>
   <div class="header">
     <h1>IS Event Calendar</h1>
     <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
       <div class="header-nav">
         <a href="/admin/dashboard">Admin Dashboard</a>
-        <a href="/logout">Logout</a>
+        <a href="/logout?next=<%= encodeURIComponent(logoutReturnUrl) %>">Logout</a>
       </div>
     <% } %>
   </div>
@@ -269,8 +394,23 @@
     <aside class="sidebar">
       <h3>Filters</h3>
       
-      <!-- Date Filter -->
       <form id="filterForm" method="GET" action="/events">
+        <div class="search-bar">
+          <input type="search"
+                 name="search"
+                 id="searchInput"
+                 placeholder="Search events"
+                 aria-label="Search events"
+                 value="<%= currentFilters.search %>">
+          <button type="submit" class="search-submit" aria-label="Search events">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/>
+            </svg>
+          </button>
+        </div>
+        <input type="hidden" name="format" id="format" value="<%= currentFilters.format %>">
+        <input type="hidden" name="sort" id="sort" value="<%= currentFilters.sort %>">
+
         <label>Start Date</label>
         <input type="date" name="startDate" id="startDate" value="<%= currentFilters.startDate %>">
         
@@ -279,7 +419,6 @@
         
         <!-- Category Filter -->
         <label>Category</label>
-        <button type="button" id="selectAllBtn" onclick="toggleSelectAll()">Select All</button>
         <div class="category-checkboxes">
           <% if (eventTypes && eventTypes.length > 0) { %>
             <% eventTypes.forEach(type => { %>
@@ -303,13 +442,6 @@
           <% } %>
         </div>
         
-        <!-- Format Filter -->
-        <label>Format</label>
-        <select name="format" id="format">
-          <option value="grid" <%= currentFilters.format === 'grid' ? 'selected' : '' %>>Grid</option>
-          <option value="list" <%= currentFilters.format === 'list' ? 'selected' : '' %>>List</option>
-        </select>
-        
         <div class="filter-actions">
           <button type="button" class="clear-filters" onclick="clearFilters()">Clear Filters</button>
         </div>
@@ -318,6 +450,34 @@
 
     <!-- Main Content -->
     <main class="content">
+      <div class="toolbar">
+        <div class="toolbar-section">
+          <span class="toolbar-label">VIEW:</span>
+          <button type="button"
+                  class="toolbar-btn <%= currentFilters.format === 'grid' ? 'active' : '' %>"
+                  data-format-toggle="grid">
+            Grid
+          </button>
+          <button type="button"
+                  class="toolbar-btn <%= currentFilters.format === 'list' ? 'active' : '' %>"
+                  data-format-toggle="list">
+            List
+          </button>
+        </div>
+        <div class="toolbar-section">
+          <span class="toolbar-label">SORT:</span>
+          <button type="button"
+                  class="toolbar-btn <%= currentFilters.sort === 'asc' ? 'active' : '' %>"
+                  data-sort-toggle="asc">
+            Chronological ↑
+          </button>
+          <button type="button"
+                  class="toolbar-btn <%= currentFilters.sort === 'desc' ? 'active' : '' %>"
+                  data-sort-toggle="desc">
+            Chronological ↓
+          </button>
+        </div>
+      </div>
       <h2>Upcoming Events</h2>
       <div id="eventsContainer" class="<%= currentFilters.format === 'list' ? 'card-list' : 'card-grid' %>">
         <% if (events && events.length > 0) { %>
@@ -371,85 +531,95 @@
           </div>
         <% } %>
       </div>
+      <hr class="submit-divider">
+      <p class="submit-prompt">Have an event you would like us to promote? <a href="<%= submitTarget %>">Submit it here.</a></p>
     </main>
   </div>
 
   <script>
-    // Function to submit filters automatically
     function submitFilters() {
-      const formData = new URLSearchParams();
-      
-      // Add date filters
+      const params = new URLSearchParams();
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
-      if (startDate) formData.append('startDate', startDate);
-      if (endDate) formData.append('endDate', endDate);
-      
-      // Add selected categories
+      const formatInput = document.getElementById('format');
+      const sortInput = document.getElementById('sort');
+      const searchInput = document.getElementById('searchInput');
+      const formatValue = formatInput ? formatInput.value : 'grid';
+      const sortValue = sortInput ? sortInput.value : 'asc';
+      const searchValue = searchInput ? searchInput.value.trim() : '';
+
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
       const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
       checkboxes.forEach(cb => {
-        formData.append('categories', cb.value);
+        params.append('categories', cb.value);
       });
-      
-      // Add format
-      const format = document.getElementById('format').value;
-      formData.append('format', format);
-      
-      // Redirect with filters
-      window.location.href = '/events?' + formData.toString();
+
+      params.append('format', formatValue);
+      params.append('sort', sortValue);
+
+      if (searchValue) {
+        params.append('search', searchValue);
+      }
+
+      const queryString = params.toString();
+      const targetUrl = '/events' + (queryString ? `?${queryString}` : '');
+      window.location.href = targetUrl;
     }
 
-    // Toggle Select All / Deselect All
-    function toggleSelectAll() {
-      const checkboxes = document.querySelectorAll('input[name="categories"][type="checkbox"]');
-      const selectAllBtn = document.getElementById('selectAllBtn');
-      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-      
-      checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
-      });
-      
-      updateSelectAllButton();
-      // Auto-submit after toggling
+    function clearFilters() {
+      const formatValue = document.getElementById('format').value || 'grid';
+      const sortValue = document.getElementById('sort').value || 'asc';
+      window.location.href = `/events?format=${formatValue}&sort=${sortValue}`;
+    }
+
+    function setFormat(format) {
+      const formatInput = document.getElementById('format');
+      if (!formatInput || formatInput.value === format) {
+        return;
+      }
+      formatInput.value = format;
       submitFilters();
     }
 
-    // Update Select All button text based on current state
-    function updateSelectAllButton() {
-      const checkboxes = document.querySelectorAll('input[name="categories"][type="checkbox"]');
-      const selectAllBtn = document.getElementById('selectAllBtn');
-      const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-      const someChecked = Array.from(checkboxes).some(cb => cb.checked);
-      
-      if (allChecked) {
-        selectAllBtn.textContent = 'Deselect All';
-      } else {
-        selectAllBtn.textContent = 'Select All';
+    function setSort(sortValue) {
+      const sortInput = document.getElementById('sort');
+      if (!sortInput || sortInput.value === sortValue) {
+        return;
       }
+      sortInput.value = sortValue;
+      submitFilters();
     }
 
-    // Clear all filters (but keep format)
-    function clearFilters() {
-      const format = document.getElementById('format').value || 'grid';
-      window.location.href = '/events?format=' + format;
-    }
-
-    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      updateSelectAllButton();
-      
-      // Auto-submit when date inputs change
+      document.getElementById('filterForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitFilters();
+      });
+
       document.getElementById('startDate').addEventListener('change', submitFilters);
       document.getElementById('endDate').addEventListener('change', submitFilters);
-      
-      // Auto-submit when format changes
-      document.getElementById('format').addEventListener('change', submitFilters);
-      
-      // Auto-submit when checkboxes change
+
       document.querySelectorAll('input[name="categories"][type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', function() {
-          updateSelectAllButton();
-          submitFilters();
+        cb.addEventListener('change', submitFilters);
+      });
+
+      const formatButtons = document.querySelectorAll('[data-format-toggle]');
+      formatButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          formatButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          setFormat(button.dataset.formatToggle);
+        });
+      });
+
+      const sortButtons = document.querySelectorAll('[data-sort-toggle]');
+      sortButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          sortButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          setSort(button.dataset.sortToggle);
         });
       });
     });
