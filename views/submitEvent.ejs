@@ -4,215 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Submit Your Event</title>
-  <link rel="stylesheet" href="/styles.css">
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/custom.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f8f9fa;
-      color: #333;
+      background-color: #f8f9fa;
       min-height: 100vh;
     }
-
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header h1 {
-      font-size: 1.8em;
+    .form-label .text-danger {
       font-weight: 600;
     }
-
-    .header-nav a {
-      color: white;
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      transition: background 0.2s;
-      font-size: 0.95em;
+    .was-validated .form-control:invalid,
+    .was-validated .form-select:invalid {
+      border-color: #dc3545;
     }
-
-    .header-nav a:hover {
-      background: rgba(255,255,255,0.2);
-    }
-
-    .submit-container {
-      max-width: 760px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-      padding: 32px 40px;
-    }
-
-    .submit-header {
-      margin-bottom: 20px;
-    }
-
-    .submit-header h2 {
-      font-size: 2em;
-      margin-bottom: 6px;
-      color: #2d3047;
-    }
-
-    .submit-header p {
-      color: #6c7284;
-    }
-
-    form {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 18px;
-    }
-
-    .full-width {
-      grid-column: 1 / -1;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-weight: 600;
-    }
-
-    .required-star {
-      color: #dc3545;
-      margin-left: 4px;
-    }
-
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      border: 1px solid #d7d8e1;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 1em;
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
-    }
-
-    .message {
-      grid-column: 1 / -1;
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-size: 0.95em;
-    }
-
-    .message.success {
-      background: #e6f4ea;
-      border: 1px solid #bfe3c7;
-      color: #1f7a4a;
-    }
-
-    .message.error {
-      background: #fee;
-      border: 1px solid #ffbaba;
-      color: #a32c2c;
-    }
-
-    .submit-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 14px;
-    }
-
-    .btn-primary {
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 28px;
-      font-size: 1em;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-primary:hover {
-      background: #5568d3;
-    }
-    .submission-history {
-      margin-top: 32px;
-      border-top: 1px solid #e0e2ec;
-      padding-top: 24px;
-    }
-
-    .submission-history h3 {
-      margin-bottom: 14px;
-      color: #2f2f5c;
-    }
-
-    .submission-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95em;
-    }
-
-    .submission-table th,
-    .submission-table td {
-      padding: 12px 10px;
-      border-bottom: 1px solid #e3e5ef;
-      text-align: left;
-    }
-
-    .submission-table th {
-      color: #6c7284;
-      font-weight: 600;
-      font-size: 0.85em;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .submission-status {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 0.85em;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .submission-status.pending {
-      background: #fff5d5;
-      color: #a25f00;
-    }
-
-    .submission-status.approved {
-      background: #e6f4ea;
-      color: #1f7a4a;
-    }
-
-    .submission-status.denied {
-      background: #ffe5e5;
-      color: #a32c2c;
+    .was-validated .form-control:valid,
+    .was-validated .form-select:valid {
+      border-color: #198754;
     }
   </style>
 </head>
@@ -221,83 +33,247 @@
     const safeFormData = typeof formData !== 'undefined' ? formData : {}; 
     const userRoleValue = typeof userRole !== 'undefined' ? userRole : '';
   %>
-  <div class="header">
-    <h1>Submit an Event</h1>
-    <div class="header-nav">
-      <a href="/events">Back to Events</a>
-      <% if (userRoleValue === 'submitter') { %>
-        <a href="/submitter/dashboard">Submitter Dashboard</a>
-      <% } else { %>
-        <a href="/login">Admin Login</a>
-      <% } %>
-    </div>
-  </div>
-  <div class="submit-container">
-    <div class="submit-header">
-      <h2>Tell us about your event</h2>
-      <p>We will review your submission and publish it if approved.</p>
-    </div>
-    <% if (typeof error_message !== 'undefined' && error_message) { %>
-      <div class="message error"><%= error_message %></div>
-    <% } %>
-    <% if (typeof success_message !== 'undefined' && success_message) { %>
-      <div class="message success"><%= success_message %></div>
-    <% } %>
-    <form action="/submit-event" method="POST" enctype="multipart/form-data">
-      <div class="form-group full-width">
-        <label for="eventName">Event Name <span style="color:#dc3545;">*</span></label>
-        <input type="text" id="eventName" name="eventName" required value="<%= safeFormData.eventName || '' %>">
-      </div>
-      <div class="form-group full-width">
-        <label for="eventDescription">Description</label>
-        <textarea id="eventDescription" name="eventDescription"><%= safeFormData.eventDescription || '' %></textarea>
-      </div>
-      <div class="form-group">
-        <label for="startTime">Start Time <span class="required-star">*</span></label>
-        <input type="datetime-local" id="startTime" name="startTime" required value="<%= safeFormData.startTime || '' %>">
-      </div>
-      <div class="form-group">
-        <label for="endTime">End Time <span class="required-star">*</span></label>
-        <input type="datetime-local" id="endTime" name="endTime" required value="<%= safeFormData.endTime || '' %>">
-      </div>
-      <div class="form-group">
-        <label for="eventLocation">Location <span style="color:#dc3545;">*</span></label>
-        <input type="text" id="eventLocation" name="eventLocation" required value="<%= safeFormData.eventLocation || '' %>">
-      </div>
-      <div class="form-group">
-        <label for="eventHost">Host</label>
-        <input type="text" id="eventHost" name="eventHost" value="<%= safeFormData.eventHost || '' %>">
-      </div>
-      <div class="form-group">
-        <label for="eventTypeID">Event Type <span class="required-star">*</span></label>
-        <select id="eventTypeID" name="eventTypeID" required>
-          <option value="" <%= !safeFormData.eventTypeID ? 'selected' : '' %>>Select type</option>
-          <% if (eventTypes && eventTypes.length > 0) { %>
-            <% eventTypes.forEach(type => { %>
-              <% const isSelected = safeFormData.eventTypeID && safeFormData.eventTypeID.toString() === type.eventtypeid.toString(); %>
-              <option value="<%= type.eventtypeid %>" <%= isSelected ? 'selected' : '' %>><%= type.eventtypename %></option>
-            <% }) %>
+  
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-gradient shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="/">
+        <i class="bi bi-calendar-event me-2"></i>IS Event Calendar
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/events">
+              <i class="bi bi-arrow-left me-1"></i>Back to Events
+            </a>
+          </li>
+          <% if (userRoleValue === 'submitter') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/submitter/dashboard">
+                <i class="bi bi-speedometer2 me-1"></i>Submitter Dashboard
+              </a>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/login">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Admin Login
+              </a>
+            </li>
           <% } %>
-        </select>
+        </ul>
       </div>
-      <div class="form-group">
-        <label for="eventURL">Event Link</label>
-        <input type="url" id="eventURL" name="eventURL" value="<%= safeFormData.eventURL || '' %>">
+    </div>
+  </nav>
+
+  <div class="container my-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow">
+          <div class="card-body p-4">
+            <div class="mb-4">
+              <h2 class="mb-2">
+                <i class="bi bi-plus-circle text-primary me-2"></i>Tell us about your event
+              </h2>
+              <p class="text-muted mb-0">We will review your submission and publish it if approved.</p>
+            </div>
+
+            <% if (typeof error_message !== 'undefined' && error_message) { %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i><%= error_message %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
+            <% if (typeof success_message !== 'undefined' && success_message) { %>
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i><%= success_message %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
+
+            <form action="/submit-event" method="POST" enctype="multipart/form-data" id="submitEventForm" novalidate>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label for="eventName" class="form-label">
+                    Event Name <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="eventName" name="eventName" required value="<%= safeFormData.eventName || '' %>" placeholder="Enter the name of your event">
+                  <div class="invalid-feedback">Please provide an event name.</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="eventDescription" class="form-label">
+                    Description
+                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
+                      Optional
+                    </span>
+                  </label>
+                  <textarea class="form-control" id="eventDescription" name="eventDescription" rows="4" placeholder="Provide details about your event (optional)"><%= safeFormData.eventDescription || '' %></textarea>
+                  <div class="form-text">Help attendees understand what your event is about</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="startTime" class="form-label">
+                    Start Time <span class="text-danger">*</span>
+                  </label>
+                  <input type="datetime-local" class="form-control" id="startTime" name="startTime" required value="<%= safeFormData.startTime || '' %>">
+                  <div class="invalid-feedback">Please select a start date and time.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="endTime" class="form-label">
+                    End Time <span class="text-danger">*</span>
+                  </label>
+                  <input type="datetime-local" class="form-control" id="endTime" name="endTime" required value="<%= safeFormData.endTime || '' %>">
+                  <div class="invalid-feedback">Please select an end date and time.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="eventLocation" class="form-label">
+                    Location <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="eventLocation" name="eventLocation" required value="<%= safeFormData.eventLocation || '' %>" placeholder="e.g., Student Union Building, Room 201">
+                  <div class="invalid-feedback">Please provide an event location.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="eventHost" class="form-label">
+                    Host
+                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
+                      Optional
+                    </span>
+                  </label>
+                  <input type="text" class="form-control" id="eventHost" name="eventHost" value="<%= safeFormData.eventHost || '' %>" placeholder="e.g., IS Department">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="eventTypeID" class="form-label">
+                    Event Type <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" id="eventTypeID" name="eventTypeID" required>
+                    <option value="" <%= !safeFormData.eventTypeID ? 'selected' : '' %>>-- Select Event Type --</option>
+                    <% if (eventTypes && eventTypes.length > 0) { %>
+                      <% eventTypes.forEach(type => { %>
+                        <% const isSelected = safeFormData.eventTypeID && safeFormData.eventTypeID.toString() === type.eventtypeid.toString(); %>
+                        <option value="<%= type.eventtypeid %>" <%= isSelected ? 'selected' : '' %>><%= type.eventtypename %></option>
+                      <% }) %>
+                    <% } else { %>
+                      <option value="">No event types available</option>
+                    <% } %>
+                  </select>
+                  <div class="invalid-feedback">Please select an event type.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="eventURL" class="form-label">
+                    Event Link
+                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
+                      Optional
+                    </span>
+                  </label>
+                  <input type="url" class="form-control" id="eventURL" name="eventURL" value="<%= safeFormData.eventURL || '' %>" placeholder="https://example.com/rsvp">
+                  <div class="form-text">RSVP or registration link</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="eventLinkText" class="form-label">
+                    Link Text
+                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
+                      Optional
+                    </span>
+                  </label>
+                  <input type="text" class="form-control" id="eventLinkText" name="eventLinkText" value="<%= safeFormData.eventLinkText || '' %>" placeholder="e.g., RSVP Now, Register Here">
+                  <div class="form-text">Custom text for the link button (default: "Click here")</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="eventimage" class="form-label">
+                    Event Image
+                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
+                      Optional
+                    </span>
+                  </label>
+                  <input type="file" class="form-control" id="eventimage" name="eventimage" accept="image/jpeg,image/jpg,image/png,image/gif">
+                  <div class="form-text">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Upload an image that will be the background of the event card (jpg, jpeg, png, gif, max 5MB)
+                  </div>
+                  <div id="imagePreview" class="mt-2 d-none">
+                    <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/events'">
+                      <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-send me-2"></i>Submit for Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="eventLinkText">Link Text</label>
-        <input type="text" id="eventLinkText" name="eventLinkText" value="<%= safeFormData.eventLinkText || '' %>">
-      </div>
-      <div class="form-group full-width">
-        <label for="eventimage">Event Image</label>
-        <input type="file" id="eventimage" name="eventimage" accept="image/*">
-        <small>Optionally upload an image that will be the background of the submitted card.</small>
-      </div>
-      <div class="submit-actions">
-        <button type="submit" class="btn-primary">Submit for Review</button>
-      </div>
-    </form>
+    </div>
   </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Bootstrap form validation
+    (function() {
+      'use strict';
+      const form = document.getElementById('submitEventForm');
+      form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    })();
+
+    // Image preview
+    document.getElementById('eventimage').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('imagePreview');
+          const img = document.getElementById('previewImg');
+          img.src = e.target.result;
+          preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById('imagePreview').classList.add('d-none');
+      }
+    });
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Validate end time is after start time
+    document.getElementById('endTime').addEventListener('change', function() {
+      const startTime = document.getElementById('startTime').value;
+      const endTime = this.value;
+      if (startTime && endTime && new Date(endTime) <= new Date(startTime)) {
+        this.setCustomValidity('End time must be after start time');
+        this.classList.add('is-invalid');
+      } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+      }
+    });
+  </script>
 </body>
 </html>
-
