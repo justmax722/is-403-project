@@ -4,373 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IS Event Calendar</title>
-  <link rel="stylesheet" href="/styles.css">
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/custom.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f8f9fa;
-      color: #333;
-      line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background-color: #f8f9fa;
     }
-
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header h1 {
-      font-size: 1.8em;
-      font-weight: 600;
-    }
-
-    .header-nav {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-    }
-
-    .header-nav a {
-      color: white;
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      transition: background 0.2s;
-      font-size: 0.95em;
-    }
-
-    .header-nav a:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .layout {
-      display: flex;
-      width: 100%;
+    .main-content {
       flex: 1;
     }
-
-    .sidebar {
-      width: 250px;
-      background: #f4f4f4;
-      padding: 20px;
-      border-right: 1px solid #ddd;
+    .card-header-image {
+      min-height: 200px;
     }
-
-    .sidebar h3 {
-      margin-top: 0;
-    }
-
-    .sidebar label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .sidebar input,
-    .sidebar select {
-      width: 100%;
-      padding: 6px;
-      margin-top: 5px;
-      box-sizing: border-box;
-    }
-
-    .sidebar button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 10px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9em;
-    }
-
-    .sidebar button:hover {
-      background: #5568d3;
-    }
-
-    .search-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-      align-items: center;
-    }
-
-    .search-bar input {
-      flex: 1;
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 999px;
-      font-size: 0.95em;
-      outline: none;
-      background: #fff;
-    }
-
-    .search-bar .search-submit {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid #ccc;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: border 0.2s ease, background 0.2s ease;
-      padding: 0;
-      margin: 0;
-      font-size: 0;
-      box-shadow: none;
-    }
-
-    .search-submit:hover {
-      border-color: #667eea;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
-    }
-
-    .search-submit svg {
-      width: 18px;
-      height: 18px;
-      fill: #667eea;
-    }
-
-    .category-checkboxes {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .category-checkboxes label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      color: #2f2f5c;
-    }
-
-    .category-checkboxes input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-      accent-color: #667eea;
-    }
-
-    .content {
-      flex: 1;
-      padding: 20px;
-    }
-
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      overflow: hidden;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-list .card {
+    .card-list-view .card {
       flex-direction: row;
-      max-width: 100%;
     }
-
-    .card-list .card-header {
+    .card-list-view .card-header-image {
       width: 300px;
       min-width: 300px;
       flex-shrink: 0;
     }
-
-    .card-list .card-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .card-header {
-      width: 100%;
-      height: 150px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      background-size: cover;
-      background-position: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.2em;
-      font-weight: bold;
-      text-align: center;
-      padding: 10px;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    .card-header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
-      z-index: 0;
-    }
-
-    .card-header-text {
-      position: relative;
-      z-index: 1;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    .card-list .card-header {
-      height: 100%;
-    }
-
-    .card-body {
-      padding: 15px;
-    }
-
-    .card-body h3 {
-      margin: 0 0 10px;
-      font-size: 1.2em;
-    }
-
-    .card-body p {
-      margin: 5px 0;
-      font-size: 0.9em;
-    }
-
-    .card-list .card-body {
-      padding: 20px;
-    }
-
-    .card-list .card-body h3 {
-      font-size: 1.4em;
-      margin-bottom: 15px;
-    }
-
-    .filter-actions {
-      margin-top: 12px;
-    }
-
-    .filter-actions button {
-      margin-bottom: 5px;
-    }
-
-    .clear-filters {
-      background: #9496a1 !important;
-      border: 1px solid #2f3035;
-      color: #fff;
-      font-weight: 600;
-      border-radius: 999px;
-      padding: 6px 14px;
-      box-shadow: none;
-      width: auto;
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .clear-filters:hover {
-      background: #dde2ff !important;
-      border-color: #9198d5;
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-
-    .toolbar-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-label {
-      font-weight: 700;
-      font-size: 0.75em;
-      letter-spacing: 0.1em;
-      color: #5a5a5a;
-    }
-
-    .toolbar-btn {
-      border: 1px solid #d3d6df;
-      border-radius: 999px;
-      padding: 6px 18px;
-      background: #fff;
-      color: #444;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-    }
-
-    .toolbar-btn:hover {
-      border-color: #667eea;
-      color: #1f1f3f;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.2);
-    }
-
-    .toolbar-btn.active {
-      background: #667eea;
-      border-color: #5c6bd6;
-      color: #fff;
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.35);
-    }
-
-    .submit-divider {
-      margin-top: 40px;
-      border: none;
-      border-top: 1px solid rgba(0, 0, 0, 0.12);
-    }
-
-    .submit-prompt {
-      margin-top: 12px;
-      font-size: 0.95em;
-      color: #2f2f5c;
-      text-align: center;
-    }
-
-    .submit-prompt a {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .submit-prompt a:hover {
-      text-decoration: underline;
+    @media (max-width: 768px) {
+      .card-list-view .card {
+        flex-direction: column;
+      }
+      .card-list-view .card-header-image {
+        width: 100%;
+        min-width: 100%;
+      }
     }
   </style>
 </head>
@@ -380,162 +48,339 @@
     const userRoleValue = typeof userRole !== 'undefined' ? userRole : '';
     const submitTarget = userRoleValue === 'admin' ? '/admin/dashboard' : (userRoleValue === 'submitter' ? '/submit-event' : '/signup');
   %>
-  <div class="header">
-    <h1>IS Event Calendar</h1>
-    <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
-      <div class="header-nav">
-        <a href="/admin/dashboard">Admin Dashboard</a>
-        <a href="/logout?next=<%= encodeURIComponent(logoutReturnUrl) %>">Logout</a>
-      </div>
-    <% } %>
-  </div>
-  <div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <h3>Filters</h3>
-      
-      <form id="filterForm" method="GET" action="/events">
-        <div class="search-bar">
-          <input type="search"
-                 name="search"
-                 id="searchInput"
-                 placeholder="Search events"
-                 aria-label="Search events"
-                 value="<%= currentFilters.search %>">
-          <button type="submit" class="search-submit" aria-label="Search events">
-            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/>
-            </svg>
-          </button>
-        </div>
-        <input type="hidden" name="format" id="format" value="<%= currentFilters.format %>">
-        <input type="hidden" name="sort" id="sort" value="<%= currentFilters.sort %>">
-
-        <label>Start Date</label>
-        <input type="date" name="startDate" id="startDate" value="<%= currentFilters.startDate %>">
-        
-        <label>End Date</label>
-        <input type="date" name="endDate" id="endDate" value="<%= currentFilters.endDate %>">
-        
-        <!-- Category Filter -->
-        <label>Category</label>
-        <div class="category-checkboxes">
-          <% if (eventTypes && eventTypes.length > 0) { %>
-            <% eventTypes.forEach(type => { %>
-              <% 
-                // Check if this category is selected (handle both string and number comparisons)
-                const typeIdStr = type.eventtypeid.toString();
-                const isChecked = currentFilters.categories && currentFilters.categories.length > 0 
-                  ? currentFilters.categories.some(cat => cat.toString() === typeIdStr || parseInt(cat) === type.eventtypeid)
-                  : false;
-              %>
-              <label>
-                <input type="checkbox" 
-                       name="categories" 
-                       value="<%= type.eventtypeid %>" 
-                       <%= isChecked ? 'checked' : '' %>>
-                <%= type.eventtypename %>
-              </label>
-            <% }) %>
+  
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-gradient shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="/">
+        <i class="bi bi-calendar-event me-2"></i>IS Event Calendar
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/events">
+              <i class="bi bi-calendar3 me-1"></i>Events
+            </a>
+          </li>
+          <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/dashboard">
+                <i class="bi bi-speedometer2 me-1"></i>Admin Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/logout?next=<%= encodeURIComponent(logoutReturnUrl) %>">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+              </a>
+            </li>
           <% } else { %>
-            <p>No categories available</p>
+            <li class="nav-item">
+              <a class="nav-link" href="<%= submitTarget %>">
+                <i class="bi bi-plus-circle me-1"></i>Submit Event
+              </a>
+            </li>
           <% } %>
-        </div>
-        
-        <div class="filter-actions">
-          <button type="button" class="clear-filters" onclick="clearFilters()">Clear Filters</button>
-        </div>
-      </form>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="content">
-      <div class="toolbar">
-        <div class="toolbar-section">
-          <span class="toolbar-label">VIEW:</span>
-          <button type="button"
-                  class="toolbar-btn <%= currentFilters.format === 'grid' ? 'active' : '' %>"
-                  data-format-toggle="grid">
-            Grid
-          </button>
-          <button type="button"
-                  class="toolbar-btn <%= currentFilters.format === 'list' ? 'active' : '' %>"
-                  data-format-toggle="list">
-            List
-          </button>
-        </div>
-        <div class="toolbar-section">
-          <span class="toolbar-label">SORT:</span>
-          <button type="button"
-                  class="toolbar-btn <%= currentFilters.sort === 'asc' ? 'active' : '' %>"
-                  data-sort-toggle="asc">
-            Chronological ↑
-          </button>
-          <button type="button"
-                  class="toolbar-btn <%= currentFilters.sort === 'desc' ? 'active' : '' %>"
-                  data-sort-toggle="desc">
-            Chronological ↓
-          </button>
-        </div>
+        </ul>
       </div>
-      <h2>Upcoming Events</h2>
-      <div id="eventsContainer" class="<%= currentFilters.format === 'list' ? 'card-list' : 'card-grid' %>">
-        <% if (events && events.length > 0) { %>
-          <% events.forEach(event => { %>
-            <div class="card">
-              <% if (event.eventimagepath) { %>
-                <div class="card-header" style="background-image: url('<%= event.eventimagepath %>');">
-              <% } else { %>
-                <div class="card-header">
-              <% } %>
-                <div class="card-header-text"><%= event.eventname %></div>
-              </div>
-              <div class="card-body">
-                <h3><%= event.eventname %></h3>
-                <p><strong>Date:</strong> 
-                  <% if (event.starttime) { %>
-                    <%= new Date(event.starttime).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %>
-                  <% } else { %>
-                    TBD
-                  <% } %>
-                </p>
-                <p><strong>Time:</strong> 
-                  <% if (event.starttime && event.endtime) { %>
-                    <%= new Date(event.starttime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %> - 
-                    <%= new Date(event.endtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
-                  <% } else { %>
-                    TBD
-                  <% } %>
-                </p>
-                <% if (event.eventlocation) { %>
-                  <p><strong>Location:</strong> <%= event.eventlocation %></p>
-                <% } %>
-                <% if (event.eventhost) { %>
-                  <p><strong>Host:</strong> <%= event.eventhost %></p>
-                <% } %>
-                <% if (event.eventtypename) { %>
-                  <p><strong>Type:</strong> <%= event.eventtypename %></p>
-                <% } %>
-                <% if (event.eventdescription) { %>
-                  <p><%= event.eventdescription %></p>
-                <% } %>
-                <% if (event.eventurl) { %>
-                  <p><strong>Link:</strong> <a href="<%= event.eventurl %>" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 500;"><%= event.eventlinktext || 'Click here' %></a></p>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="container-fluid">
+      <div class="row g-0">
+        <!-- Sidebar Filters -->
+        <aside class="col-lg-3 col-xl-2 bg-light border-end p-3">
+          <h5 class="mb-3">
+            <i class="bi bi-funnel me-2"></i>Filters
+          </h5>
+          
+          <form id="filterForm" method="GET" action="/events">
+            <div class="input-group mb-3">
+              <input type="search"
+                     name="search"
+                     id="searchInput"
+                     class="form-control"
+                     placeholder="Search events"
+                     aria-label="Search events"
+                     value="<%= currentFilters.search %>">
+              <button type="submit" class="btn btn-outline-secondary search-icon-btn" aria-label="Search">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <input type="hidden" name="format" id="format" value="<%= currentFilters.format %>">
+            <input type="hidden" name="sort" id="sort" value="<%= currentFilters.sort %>">
+
+            <div class="mb-3">
+              <label for="startDate" class="form-label fw-bold">
+                <i class="bi bi-calendar-event me-1"></i>Start Date
+              </label>
+              <input type="date" name="startDate" id="startDate" class="form-control form-control-sm" value="<%= currentFilters.startDate %>">
+            </div>
+            
+            <div class="mb-3">
+              <label for="endDate" class="form-label fw-bold">
+                <i class="bi bi-calendar-x me-1"></i>End Date
+              </label>
+              <input type="date" name="endDate" id="endDate" class="form-control form-control-sm" value="<%= currentFilters.endDate %>">
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                <i class="bi bi-tags me-1"></i>Category
+              </label>
+              <div class="form-check-group">
+                <% if (eventTypes && eventTypes.length > 0) { %>
+                  <% eventTypes.forEach(type => { %>
+                    <% 
+                      const typeIdStr = type.eventtypeid.toString();
+                      const isChecked = currentFilters.categories && currentFilters.categories.length > 0 
+                        ? currentFilters.categories.some(cat => cat.toString() === typeIdStr || parseInt(cat) === type.eventtypeid)
+                        : false;
+                    %>
+                    <div class="form-check">
+                      <input class="form-check-input" 
+                             type="checkbox" 
+                             name="categories" 
+                             id="category-<%= type.eventtypeid %>"
+                             value="<%= type.eventtypeid %>" 
+                             <%= isChecked ? 'checked' : '' %>>
+                      <label class="form-check-label" for="category-<%= type.eventtypeid %>">
+                        <%= type.eventtypename %>
+                      </label>
+                    </div>
+                  <% }) %>
+                <% } else { %>
+                  <p class="text-muted small">No categories available</p>
                 <% } %>
               </div>
             </div>
-          <% }) %>
-        <% } else { %>
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-            <p>No events found matching your filters. Try adjusting your search criteria.</p>
+            
+            <div class="d-grid">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">
+                <i class="bi bi-x-circle me-1"></i>Clear Filters
+              </button>
+            </div>
+          </form>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="col-lg-9 col-xl-10 p-4">
+          <!-- Toolbar -->
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small text-uppercase fw-bold">View:</span>
+              <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-sm <%= currentFilters.format === 'grid' ? 'btn-primary' : 'btn-outline-primary' %>"
+                        data-format-toggle="grid"
+                        aria-label="Grid view">
+                  <i class="bi bi-grid-3x3-gap me-1"></i>Grid
+                </button>
+                <button type="button"
+                        class="btn btn-sm <%= currentFilters.format === 'list' ? 'btn-primary' : 'btn-outline-primary' %>"
+                        data-format-toggle="list"
+                        aria-label="List view">
+                  <i class="bi bi-list-ul me-1"></i>List
+                </button>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small text-uppercase fw-bold">Sort:</span>
+              <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-sm <%= currentFilters.sort === 'asc' ? 'btn-primary' : 'btn-outline-primary' %>"
+                        data-sort-toggle="asc"
+                        aria-label="Sort ascending">
+                  <i class="bi bi-arrow-up me-1"></i>Chronological ↑
+                </button>
+                <button type="button"
+                        class="btn btn-sm <%= currentFilters.sort === 'desc' ? 'btn-primary' : 'btn-outline-primary' %>"
+                        data-sort-toggle="desc"
+                        aria-label="Sort descending">
+                  <i class="bi bi-arrow-down me-1"></i>Chronological ↓
+                </button>
+              </div>
+            </div>
+            <% if (events && events.length > 0) { %>
+              <div class="ms-auto">
+                <span class="badge bg-primary">
+                  <i class="bi bi-calendar-check me-1"></i><%= events.length %> event<%= events.length !== 1 ? 's' : '' %>
+                </span>
+              </div>
+            <% } %>
           </div>
-        <% } %>
+
+          <h2 class="mb-4">
+            <i class="bi bi-calendar-check me-2"></i>Upcoming Events
+          </h2>
+          
+          <div id="eventsContainer" class="<%= currentFilters.format === 'list' ? 'card-list-view' : '' %>">
+            <% if (events && events.length > 0) { %>
+              <% if (currentFilters.format === 'list') { %>
+                <div class="d-flex flex-column gap-3">
+                  <% events.forEach(event => { %>
+                    <div class="card shadow-sm">
+                      <div class="card-body d-flex p-0">
+                        <div class="card-header-image <%= event.eventimagepath ? '' : 'bg-primary' %>" 
+                             <% if (event.eventimagepath) { %>style="background-image: url('<%= event.eventimagepath %>');"<% } %>>
+                          <div class="card-header-text text-center p-3">
+                            <%= event.eventname %>
+                          </div>
+                        </div>
+                        <div class="flex-grow-1 p-4">
+                          <h5 class="card-title mb-3"><%= event.eventname %></h5>
+                          <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                              <p class="mb-1">
+                                <i class="bi bi-calendar3 text-primary me-2"></i>
+                                <strong>Date:</strong> 
+                                <% if (event.starttime) { %>
+                                  <%= new Date(event.starttime).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                <% } else { %>
+                                  TBD
+                                <% } %>
+                              </p>
+                            </div>
+                            <div class="col-md-6">
+                              <p class="mb-1">
+                                <i class="bi bi-clock text-primary me-2"></i>
+                                <strong>Time:</strong> 
+                                <% if (event.starttime && event.endtime) { %>
+                                  <%= new Date(event.starttime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %> - 
+                                  <%= new Date(event.endtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
+                                <% } else { %>
+                                  TBD
+                                <% } %>
+                              </p>
+                            </div>
+                            <% if (event.eventlocation) { %>
+                              <div class="col-md-6">
+                                <p class="mb-1">
+                                  <i class="bi bi-geo-alt text-primary me-2"></i>
+                                  <strong>Location:</strong> <%= event.eventlocation %>
+                                </p>
+                              </div>
+                            <% } %>
+                            <% if (event.eventhost) { %>
+                              <div class="col-md-6">
+                                <p class="mb-1">
+                                  <i class="bi bi-person text-primary me-2"></i>
+                                  <strong>Host:</strong> <%= event.eventhost %>
+                                </p>
+                              </div>
+                            <% } %>
+                          </div>
+                          <% if (event.eventtypename) { %>
+                            <span class="badge bg-primary mb-2"><%= event.eventtypename %></span>
+                          <% } %>
+                          <% if (event.eventdescription) { %>
+                            <p class="card-text mt-2"><%= event.eventdescription %></p>
+                          <% } %>
+                          <% if (event.eventurl) { %>
+                            <a href="<%= event.eventurl %>" target="_blank" class="btn btn-primary btn-sm mt-2" rel="noopener noreferrer">
+                              <i class="bi bi-link-45deg me-1"></i><%= event.eventlinktext || 'Click here' %>
+                            </a>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } else { %>
+                <div class="row g-4">
+                  <% events.forEach(event => { %>
+                    <div class="col-md-6 col-lg-4">
+                      <div class="card h-100 shadow-sm">
+                        <div class="card-header-image <%= event.eventimagepath ? '' : 'bg-primary' %>" 
+                             <% if (event.eventimagepath) { %>style="background-image: url('<%= event.eventimagepath %>');"<% } %>>
+                          <div class="card-header-text text-center p-3">
+                            <%= event.eventname %>
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title"><%= event.eventname %></h5>
+                          <p class="card-text mb-2">
+                            <i class="bi bi-calendar3 text-primary me-2"></i>
+                            <strong>Date:</strong> 
+                            <% if (event.starttime) { %>
+                              <%= new Date(event.starttime).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %>
+                            <% } else { %>
+                              TBD
+                            <% } %>
+                          </p>
+                          <p class="card-text mb-2">
+                            <i class="bi bi-clock text-primary me-2"></i>
+                            <strong>Time:</strong> 
+                            <% if (event.starttime && event.endtime) { %>
+                              <%= new Date(event.starttime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %> - 
+                              <%= new Date(event.endtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
+                            <% } else { %>
+                              TBD
+                            <% } %>
+                          </p>
+                          <% if (event.eventlocation) { %>
+                            <p class="card-text mb-2">
+                              <i class="bi bi-geo-alt text-primary me-2"></i>
+                              <strong>Location:</strong> <%= event.eventlocation %>
+                            </p>
+                          <% } %>
+                          <% if (event.eventhost) { %>
+                            <p class="card-text mb-2">
+                              <i class="bi bi-person text-primary me-2"></i>
+                              <strong>Host:</strong> <%= event.eventhost %>
+                            </p>
+                          <% } %>
+                          <% if (event.eventtypename) { %>
+                            <span class="badge bg-primary mb-2"><%= event.eventtypename %></span>
+                          <% } %>
+                          <% if (event.eventdescription) { %>
+                            <p class="card-text"><%= event.eventdescription %></p>
+                          <% } %>
+                          <% if (event.eventurl) { %>
+                            <a href="<%= event.eventurl %>" target="_blank" class="btn btn-primary btn-sm w-100 mt-2" rel="noopener noreferrer">
+                              <i class="bi bi-link-45deg me-1"></i><%= event.eventlinktext || 'Click here' %>
+                            </a>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            <% } else { %>
+              <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                  <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                  <h4 class="text-muted mb-3">No events found</h4>
+                  <p class="text-muted mb-4">Try adjusting your search criteria or filters to find events.</p>
+                  <button type="button" class="btn btn-primary" onclick="clearFilters()">
+                    <i class="bi bi-x-circle me-2"></i>Clear All Filters
+                  </button>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <hr class="my-5">
+          <div class="text-center">
+            <p class="text-muted mb-3">
+              Have an event you would like us to promote?
+            </p>
+            <a href="<%= submitTarget %>" class="btn btn-outline-primary">
+              <i class="bi bi-plus-circle me-2"></i>Submit it here
+            </a>
+          </div>
+        </main>
       </div>
-      <hr class="submit-divider">
-      <p class="submit-prompt">Have an event you would like us to promote? <a href="<%= submitTarget %>">Submit it here.</a></p>
-    </main>
+    </div>
   </div>
 
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function submitFilters() {
       const params = new URLSearchParams();
@@ -608,8 +453,12 @@
       const formatButtons = document.querySelectorAll('[data-format-toggle]');
       formatButtons.forEach(button => {
         button.addEventListener('click', function() {
-          formatButtons.forEach(btn => btn.classList.remove('active'));
-          button.classList.add('active');
+          formatButtons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+          });
+          button.classList.remove('btn-outline-primary');
+          button.classList.add('btn-primary');
           setFormat(button.dataset.formatToggle);
         });
       });
@@ -617,8 +466,12 @@
       const sortButtons = document.querySelectorAll('[data-sort-toggle]');
       sortButtons.forEach(button => {
         button.addEventListener('click', function() {
-          sortButtons.forEach(btn => btn.classList.remove('active'));
-          button.classList.add('active');
+          sortButtons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+          });
+          button.classList.remove('btn-outline-primary');
+          button.classList.add('btn-primary');
           setSort(button.dataset.sortToggle);
         });
       });
