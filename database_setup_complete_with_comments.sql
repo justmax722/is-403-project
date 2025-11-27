@@ -99,6 +99,7 @@ CREATE TABLE event_submissions (
     eventhost VARCHAR(200),
     eventurl VARCHAR(500),
     eventlinktext VARCHAR(200),
+    eventimagepath VARCHAR(500),
     eventtypeid INTEGER NOT NULL,
     submitterid INTEGER,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',

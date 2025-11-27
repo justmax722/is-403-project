@@ -436,7 +436,7 @@ app.get("/submit-event", (req, res) => {
     renderSubmitEvent(req, res, { success_message: successMessage });
 });
 
-app.post("/submit-event", (req, res) => {
+app.post("/submit-event", upload.single('eventimage'), (req, res) => {
     if (!req.session.submitterId) {
         return res.redirect("/signup");
     }
@@ -457,6 +457,13 @@ app.post("/submit-event", (req, res) => {
     const formattedEnd = formatDateTimeLocal(endTime);
 
     const cleanedLocation = eventLocation ? eventLocation.trim() : '';
+    const imagePath = req.file ? '/uploads/events/' + req.file.filename : null;
+
+    const cleanupUpload = () => {
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+    };
 
     const preservedFormData = {
         eventName: eventName ? eventName.trim() : '',
@@ -471,6 +478,7 @@ app.post("/submit-event", (req, res) => {
     };
 
     const renderWithError = (message) => {
+        cleanupUpload();
         renderSubmitEvent(req, res, {
             error_message: message,
             formData: preservedFormData
@@ -493,6 +501,7 @@ app.post("/submit-event", (req, res) => {
         eventhost: eventHost ? eventHost.trim() : null,
         eventurl: eventURL ? eventURL.trim() : null,
         eventlinktext: eventLinkText ? eventLinkText.trim() : null,
+        eventimagepath: imagePath,
         eventtypeid: parseInt(eventTypeID, 10),
         submitterid: req.session.submitterId,
         status: 'pending'
@@ -644,7 +653,7 @@ app.post("/admin/submissions/:id/approve", (req, res) => {
                 eventhost: submission.eventhost,
                 eventurl: submission.eventurl,
                 eventlinktext: submission.eventlinktext,
-                eventimagepath: null,
+                eventimagepath: submission.eventimagepath,
                 eventtypeid: submission.eventtypeid
             };
 

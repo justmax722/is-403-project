@@ -243,7 +243,7 @@
     <% if (typeof success_message !== 'undefined' && success_message) { %>
       <div class="message success"><%= success_message %></div>
     <% } %>
-    <form action="/submit-event" method="POST">
+    <form action="/submit-event" method="POST" enctype="multipart/form-data">
       <div class="form-group full-width">
         <label for="eventName">Event Name <span style="color:#dc3545;">*</span></label>
         <input type="text" id="eventName" name="eventName" required value="<%= safeFormData.eventName || '' %>">
@@ -287,6 +287,11 @@
       <div class="form-group">
         <label for="eventLinkText">Link Text</label>
         <input type="text" id="eventLinkText" name="eventLinkText" value="<%= safeFormData.eventLinkText || '' %>">
+      </div>
+      <div class="form-group full-width">
+        <label for="eventimage">Event Image</label>
+        <input type="file" id="eventimage" name="eventimage" accept="image/*">
+        <small>Optionally upload an image that will be the background of the submitted card.</small>
       </div>
       <div class="submit-actions">
         <button type="submit" class="btn-primary">Submit for Review</button>

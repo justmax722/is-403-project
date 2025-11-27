@@ -50,6 +50,7 @@ CREATE TABLE event_submissions (
     eventhost VARCHAR(200),
     eventurl VARCHAR(500),
     eventlinktext VARCHAR(200),
+    eventimagepath VARCHAR(500),
     eventtypeid INTEGER NOT NULL REFERENCES eventtypes(eventtypeid) ON DELETE RESTRICT ON UPDATE CASCADE,
     submitterid INTEGER REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
