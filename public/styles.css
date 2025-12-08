@@ -1,10 +1,7 @@
-/* Global styles for IS Event Calendar */
-/* Note: Most styles are inline in each EJS file for this project */
+/* Legacy styles.css - Now using Bootstrap + custom.css for all styling */
+/* This file is kept for backwards compatibility but is no longer used */
 
 body {
   margin: 0;
   padding: 0;
 }
-
-/* This file is intentionally minimal as styles are defined inline in EJS files */
-

@@ -484,8 +484,17 @@ app.post("/submit-event", upload.single('eventimage'), (req, res) => {
             formData: preservedFormData
         });
     };
-    if (!eventName || !eventDescription || !formattedStart || !formattedEnd || !eventTypeID || !cleanedLocation) {
-        return renderWithError("Please fill in all required fields (Event Name, Start Time, End Time, Location, Event Type).");
+    
+    // Better validation with specific field checks
+    const missingFields = [];
+    if (!eventName || !eventName.trim()) missingFields.push('Event Name');
+    if (!startTime || !formattedStart) missingFields.push('Start Time');
+    if (!endTime || !formattedEnd) missingFields.push('End Time');
+    if (!eventLocation || !cleanedLocation) missingFields.push('Location');
+    if (!eventTypeID) missingFields.push('Event Type');
+    
+    if (missingFields.length > 0) {
+        return renderWithError(`Please fill in all required fields: ${missingFields.join(', ')}`);
     }
 
     if (new Date(formattedEnd) <= new Date(formattedStart)) {
@@ -1003,6 +1012,6 @@ app.post("/admin/delete/:id", (req, res) => {
 // Note: /users route removed to keep the project minimal for assignment requirements.
 
 
-app.listen(port, () => {
-    console.log("The server is listening");
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is listening on port ${port}`);
 });
