@@ -61,14 +61,24 @@ app.use(
     )
 );
 
+// Database connection - supports both DB_* and PG* environment variables (PostgreSQL standard)
+// Prioritizes PG* variables (standard for PostgreSQL) and falls back to DB_* for backward compatibility
+const dbHost = process.env.PGHOST || process.env.DB_HOST || "localhost";
+const isLocalhost = dbHost === "localhost" || dbHost === "127.0.0.1";
+
 const knex = require("knex")({
     client: "pg",
     connection: {
-        host : process.env.DB_HOST || "localhost",
-        user : process.env.DB_USER || "postgres",
-        password : process.env.DB_PASSWORD || "admin",
-        database : process.env.DB_NAME || "foodisus",
-        port : process.env.DB_PORT || 5432  // PostgreSQL 16 typically uses port 5434
+        host: dbHost,
+        user: process.env.PGUSER || process.env.DB_USER || "postgres",
+        password: process.env.PGPASSWORD || process.env.DB_PASSWORD || "admin",
+        database: process.env.PGDATABASE || process.env.DB_NAME || "project3",
+        port: parseInt(process.env.PGPORT || process.env.DB_PORT || 5432),
+        // SSL configuration for AWS RDS (required for secure connections)
+        // Enable SSL for remote connections (RDS), disable for localhost
+        ssl: !isLocalhost ? {
+            rejectUnauthorized: false  // Required for AWS RDS - certificates are self-signed but connection is still encrypted
+        } : false
     }
 });
 

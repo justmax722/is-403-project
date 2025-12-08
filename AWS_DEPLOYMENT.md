@@ -75,7 +75,20 @@
    - **Capacity**: Auto Scaling (recommended for production)
 
 4. **Software Configuration** → Environment Properties:
-   Add the following environment variables:
+   Add the following environment variables (you can use either PG* or DB_* naming):
+   
+   **Option 1: PostgreSQL Standard Names (Recommended)**
+   ```
+   PGHOST=your-rds-endpoint.xxxxxxxx.us-east-1.rds.amazonaws.com
+   PGUSER=postgres
+   PGPASSWORD=your-database-password
+   PGDATABASE=eventcalendar
+   PGPORT=5432
+   SESSION_SECRET=your-very-long-random-secret-key-here
+   NODE_ENV=production
+   ```
+   
+   **Option 2: Custom Names (Also Supported)**
    ```
    DB_HOST=your-rds-endpoint.xxxxxxxx.us-east-1.rds.amazonaws.com
    DB_USER=postgres
@@ -83,8 +96,10 @@
    DB_NAME=eventcalendar
    DB_PORT=5432
    SESSION_SECRET=your-very-long-random-secret-key-here
-   PORT=8081
    NODE_ENV=production
+   ```
+   
+   **Note**: The code supports both naming conventions. PORT is automatically set by Elastic Beanstalk.
    
    # S3 Configuration (if using S3 for images)
    AWS_ACCESS_KEY_ID=your-aws-access-key-id
@@ -114,15 +129,16 @@ eb create is-event-calendar-prod
 
 4. Set Environment Variables:
 ```bash
-eb setenv DB_HOST=your-rds-endpoint.xxxxxxxx.us-east-1.rds.amazonaws.com \
-         DB_USER=postgres \
-         DB_PASSWORD=your-database-password \
-         DB_NAME=eventcalendar \
-         DB_PORT=5432 \
+eb setenv PGHOST=your-rds-endpoint.xxxxxxxx.us-east-1.rds.amazonaws.com \
+         PGUSER=postgres \
+         PGPASSWORD=your-database-password \
+         PGDATABASE=eventcalendar \
+         PGPORT=5432 \
          SESSION_SECRET=your-very-long-random-secret-key \
-         PORT=8081 \
          NODE_ENV=production
 ```
+
+**Note**: The code supports both PG* (PostgreSQL standard) and DB_* naming conventions. PORT is automatically set by Elastic Beanstalk.
 
 5. Deploy:
 ```bash
@@ -187,16 +203,18 @@ To implement S3:
 
 ## Environment Variables Reference
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| DB_HOST | RDS endpoint | `db.xxxxx.us-east-1.rds.amazonaws.com` |
-| DB_USER | Database username | `postgres` |
-| DB_PASSWORD | Database password | `your-secure-password` |
-| DB_NAME | Database name | `eventcalendar` |
-| DB_PORT | Database port | `5432` |
-| SESSION_SECRET | Random secret for sessions | `generate-random-string` |
-| PORT | Application port | `8081` (EB default) |
-| NODE_ENV | Environment | `production` |
+| Variable | Description | Example | Alternative Name |
+|----------|-------------|---------|------------------|
+| PGHOST / DB_HOST | RDS endpoint | `db.xxxxx.us-east-1.rds.amazonaws.com` | DB_HOST |
+| PGUSER / DB_USER | Database username | `postgres` | DB_USER |
+| PGPASSWORD / DB_PASSWORD | Database password | `your-secure-password` | DB_PASSWORD |
+| PGDATABASE / DB_NAME | Database name | `eventcalendar` | DB_NAME |
+| PGPORT / DB_PORT | Database port | `5432` | DB_PORT |
+| SESSION_SECRET | Random secret for sessions | `generate-random-string` | - |
+| PORT | Application port | Auto-set by EB | - |
+| NODE_ENV | Environment | `production` | - |
+
+**Note**: The application supports both PostgreSQL standard (PG*) and custom (DB_*) environment variable names. SSL is automatically enabled for RDS connections.
 
 ## Cost Estimates (AWS Free Tier Eligible)
 
