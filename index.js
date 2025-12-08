@@ -286,6 +286,7 @@ app.post("/login", async (req, res) => {
             .first();
 
         if (submitter) {
+            req.session.isLoggedIn = true;
             req.session.submitterId = submitter.id;
             req.session.submitterEmail = submitter.email;
             req.session.userRole = "submitter";
