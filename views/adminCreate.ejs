@@ -69,7 +69,7 @@
               </div>
             <% } %>
 
-            <form action="/admin/create" method="POST" enctype="multipart/form-data">
+            <form action="/admin/create" method="POST">
               <div class="row g-3">
                 <div class="col-12">
                   <label for="eventName" class="form-label">
@@ -118,12 +118,6 @@
                   <label for="eventlinktext" class="form-label">Link Text (Optional)</label>
                   <input type="text" class="form-control" id="eventlinktext" name="eventlinktext" placeholder="Enter custom link text (optional)" value="<%= safeFormData.eventlinktext || '' %>">
                   <div class="form-text">Leave blank to default to "Click here".</div>
-                </div>
-
-                <div class="col-12">
-                  <label for="eventimage" class="form-label">Event Image</label>
-                  <input type="file" class="form-control" id="eventimage" name="eventimage" accept="image/*">
-                  <div class="form-text">Optional: Upload an image (jpg, jpeg, png, gif, max 5MB)</div>
                 </div>
 
                 <div class="col-12">

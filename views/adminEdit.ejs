@@ -70,7 +70,7 @@
               </div>
             <% } %>
 
-            <form action="/admin/edit/<%= event.eventid %>" method="POST" enctype="multipart/form-data">
+            <form action="/admin/edit/<%= event.eventid %>" method="POST">
               <div class="row g-3">
                 <div class="col-12">
                   <label for="eventName" class="form-label">
@@ -119,18 +119,6 @@
                   <label for="eventlinktext" class="form-label">Link Text (Optional)</label>
                   <input type="text" class="form-control" id="eventlinktext" name="eventlinktext" value="<%= event.eventlinktext || '' %>" placeholder="Enter custom text for the link (e.g., 'RSVP Now', 'Register Here') (optional)">
                   <div class="form-text">Leave blank to use "Click here" as default</div>
-                </div>
-
-                <div class="col-12">
-                  <label for="eventimage" class="form-label">Event Image</label>
-                  <% if (event.eventimagepath) { %>
-                    <div class="mb-3">
-                      <p class="text-muted small mb-2">Current image:</p>
-                      <img src="<%= event.eventimagepath %>" alt="Event image" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">
-                    </div>
-                  <% } %>
-                  <input type="file" class="form-control" id="eventimage" name="eventimage" accept="image/*">
-                  <div class="form-text">Optional: Upload a new image to replace the current one (jpg, jpeg, png, gif, max 5MB)</div>
                 </div>
 
                 <div class="col-12">

@@ -11,10 +11,7 @@ const express = require("express");
 //Needed for the session variable - Stored on the server to hold data
 const session = require("express-session");
 
-// Multer for file uploads (images)
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+// Note: Image upload functionality has been removed
 
 const formatDateTimeLocal = (datetimeLocal) => {
     if (!datetimeLocal) return null;
@@ -85,44 +82,7 @@ const knex = require("knex")({
 // Tells Express how to read form data sent in the body of a request
 app.use(express.urlencoded({extended: true}));
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, "public", "uploads", "events");
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure Multer storage for event images
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename: timestamp-originalname
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        const basename = path.basename(file.originalname, ext);
-        cb(null, basename + '-' + uniqueSuffix + ext);
-    }
-});
-
-// File filter to only accept images
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb(new Error('Only image files (jpeg, jpg, png, gif) are allowed!'));
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: fileFilter
-});
+// Note: Image upload directory creation removed - images no longer supported
 
 // Serve static files from public directory (for CSS, images, etc.)
 // This must come BEFORE authentication middleware so CSS/images load without login
@@ -180,7 +140,6 @@ const handleEventsPage = (req, res) => {
         "events.eventhost",
         "events.eventurl",
         "events.eventlinktext",
-        "events.eventimagepath",
         "events.eventtypeid",
         "eventtypes.eventtypename"
     )
@@ -447,7 +406,7 @@ app.get("/submit-event", (req, res) => {
     renderSubmitEvent(req, res, { success_message: successMessage });
 });
 
-app.post("/submit-event", upload.single('eventimage'), (req, res) => {
+app.post("/submit-event", (req, res) => {
     if (!req.session.submitterId) {
         return res.redirect("/signup");
     }
@@ -468,13 +427,6 @@ app.post("/submit-event", upload.single('eventimage'), (req, res) => {
     const formattedEnd = formatDateTimeLocal(endTime);
 
     const cleanedLocation = eventLocation ? eventLocation.trim() : '';
-    const imagePath = req.file ? '/uploads/events/' + req.file.filename : null;
-
-    const cleanupUpload = () => {
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
-    };
 
     const preservedFormData = {
         eventName: eventName ? eventName.trim() : '',
@@ -489,7 +441,6 @@ app.post("/submit-event", upload.single('eventimage'), (req, res) => {
     };
 
     const renderWithError = (message) => {
-        cleanupUpload();
         renderSubmitEvent(req, res, {
             error_message: message,
             formData: preservedFormData
@@ -521,7 +472,6 @@ app.post("/submit-event", upload.single('eventimage'), (req, res) => {
         eventhost: eventHost ? eventHost.trim() : null,
         eventurl: eventURL ? eventURL.trim() : null,
         eventlinktext: eventLinkText ? eventLinkText.trim() : null,
-        eventimagepath: imagePath,
         eventtypeid: parseInt(eventTypeID, 10),
         submitterid: req.session.submitterId,
         status: 'pending'
@@ -578,7 +528,6 @@ app.get("/admin/dashboard", (req, res) => {
         "events.eventhost",
         "events.eventurl",
         "events.eventlinktext",
-        "events.eventimagepath",
         "eventtypes.eventtypename as typename"
     )
     .from("events")
@@ -673,7 +622,6 @@ app.post("/admin/submissions/:id/approve", (req, res) => {
                 eventhost: submission.eventhost,
                 eventurl: submission.eventurl,
                 eventlinktext: submission.eventlinktext,
-                eventimagepath: submission.eventimagepath,
                 eventtypeid: submission.eventtypeid
             };
 
@@ -729,7 +677,7 @@ app.get("/admin/create", (req, res) => {
 });
 
 // Admin Create Event - Handle form submission with file upload
-app.post("/admin/create", upload.single('eventimage'), (req, res) => {
+app.post("/admin/create", (req, res) => {
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
     const locationValue = eventLocation ? eventLocation.trim() : '';
     
@@ -788,13 +736,6 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
             });
     }
     
-    // Handle image upload - get file path if uploaded
-    let imagePath = null;
-    if (req.file) {
-        // Store relative path from public directory
-        imagePath = '/uploads/events/' + req.file.filename;
-    }
-    
     knex("events")
         .insert({
             eventname: eventName.trim(),
@@ -805,7 +746,6 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
             eventhost: eventHost ? eventHost.trim() : null,
             eventurl: eventurl ? eventurl.trim() : null,
             eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
-            eventimagepath: imagePath,
             eventtypeid: parseInt(eventTypeID)
         })
         .then(() => {
@@ -814,10 +754,6 @@ app.post("/admin/create", upload.single('eventimage'), (req, res) => {
         })
         .catch(err => {
             console.error("Failed to create event:", err);
-            // Delete uploaded file if event creation failed
-            if (req.file && fs.existsSync(req.file.path)) {
-                fs.unlinkSync(req.file.path);
-            }
             // Reload form with error
             knex.select("eventtypeid", "eventtypename")
                 .from("eventtypes")
@@ -859,7 +795,7 @@ app.get("/admin/edit/:id", (req, res) => {
 });
 
 // Admin Edit Event - Handle form submission with file upload
-app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
+app.post("/admin/edit/:id", (req, res) => {
     const eventId = req.params.id;
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
     const locationValue = eventLocation ? eventLocation.trim() : '';
@@ -925,41 +861,25 @@ app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
         });
     }
     
-    // Get current event to check for existing image
+    // Prepare update data
+    const updateData = {
+        eventname: eventName.trim(),
+        eventdescription: eventDescription ? eventDescription.trim() : null,
+        starttime: formattedStartTime,
+        endtime: formattedEndTime,
+        eventlocation: locationValue || null,
+        eventhost: eventHost ? eventHost.trim() : null,
+        eventurl: eventurl ? eventurl.trim() : null,
+        eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
+        eventtypeid: parseInt(eventTypeID)
+    };
+    
+    // Update event
     knex.select("*").from("events").where("eventid", eventId).first()
         .then(event => {
             if (!event) {
                 return res.redirect("/admin/dashboard");
             }
-            
-            let imagePath = event.eventimagepath; // Keep existing image by default
-            
-            // If new image uploaded, replace old one
-            if (req.file) {
-                // Delete old image file if it exists
-                if (event.eventimagepath) {
-                    const oldImagePath = path.join(__dirname, "public", event.eventimagepath);
-                    if (fs.existsSync(oldImagePath)) {
-                        fs.unlinkSync(oldImagePath);
-                    }
-                }
-                // Store relative path from public directory
-                imagePath = '/uploads/events/' + req.file.filename;
-            }
-            
-            // Prepare update data
-            const updateData = {
-                eventname: eventName.trim(),
-                eventdescription: eventDescription ? eventDescription.trim() : null,
-                starttime: formattedStartTime,
-                endtime: formattedEndTime,
-                eventlocation: locationValue || null,
-                eventhost: eventHost ? eventHost.trim() : null,
-                eventurl: eventurl ? eventurl.trim() : null,
-                eventlinktext: (eventlinktext && typeof eventlinktext === 'string' && eventlinktext.trim() !== '') ? eventlinktext.trim() : null,
-                eventimagepath: imagePath,
-                eventtypeid: parseInt(eventTypeID)
-            };
             
             // Debug: Log update data
             console.log("Updating event with data:", updateData);
@@ -979,10 +899,6 @@ app.post("/admin/edit/:id", upload.single('eventimage'), (req, res) => {
         })
         .catch(err => {
             console.error("Failed to update event:", err);
-            // Delete uploaded file if event update failed
-            if (req.file && fs.existsSync(req.file.path)) {
-                fs.unlinkSync(req.file.path);
-            }
             // Reload edit form with error
             Promise.all([
                 knex.select("*").from("events").where("eventid", eventId).first(),

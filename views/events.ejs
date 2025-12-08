@@ -236,8 +236,7 @@
                   <% events.forEach((event, index) => { %>
                     <div class="card shadow-sm event-item" data-index="<%= index %>" <% if (index >= 9) { %>style="display: none;"<% } %>>
                       <div class="card-body d-flex p-0">
-                        <div class="card-header-image <%= event.eventimagepath ? '' : 'bg-primary' %>" 
-                             <% if (event.eventimagepath) { %>style="background-image: url('<%= event.eventimagepath %>');"<% } %>>
+                        <div class="card-header-image bg-primary">
                           <div class="card-header-text text-center p-3">
                             <%= event.eventname %>
                           </div>
@@ -313,8 +312,7 @@
                   <% events.forEach((event, index) => { %>
                     <div class="col-md-6 col-lg-4 event-item" data-index="<%= index %>" <% if (index >= 9) { %>style="display: none;"<% } %>>
                       <div class="card h-100 shadow-sm">
-                        <div class="card-header-image <%= event.eventimagepath ? '' : 'bg-primary' %>" 
-                             <% if (event.eventimagepath) { %>style="background-image: url('<%= event.eventimagepath %>');"<% } %>>
+                        <div class="card-header-image bg-primary">
                           <div class="card-header-text text-center p-3">
                             <%= event.eventname %>
                           </div>

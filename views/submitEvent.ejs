@@ -93,7 +93,7 @@
               </div>
             <% } %>
 
-            <form action="/submit-event" method="POST" enctype="multipart/form-data" id="submitEventForm" novalidate>
+            <form action="/submit-event" method="POST" id="submitEventForm" novalidate>
               <div class="row g-3">
                 <div class="col-12">
                   <label for="eventName" class="form-label">
@@ -189,23 +189,6 @@
                 </div>
 
                 <div class="col-12">
-                  <label for="eventimage" class="form-label">
-                    Event Image
-                    <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional field">
-                      Optional
-                    </span>
-                  </label>
-                  <input type="file" class="form-control" id="eventimage" name="eventimage" accept="image/jpeg,image/jpg,image/png,image/gif">
-                  <div class="form-text">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Upload an image that will be the background of the event card (jpg, jpeg, png, gif, max 5MB)
-                  </div>
-                  <div id="imagePreview" class="mt-2 d-none">
-                    <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">
-                  </div>
-                </div>
-
-                <div class="col-12">
                   <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/events'">
                       <i class="bi bi-x-circle me-2"></i>Cancel
@@ -238,23 +221,6 @@
         form.classList.add('was-validated');
       }, false);
     })();
-
-    // Image preview
-    document.getElementById('eventimage').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.getElementById('imagePreview');
-          const img = document.getElementById('previewImg');
-          img.src = e.target.result;
-          preview.classList.remove('d-none');
-        };
-        reader.readAsDataURL(file);
-      } else {
-        document.getElementById('imagePreview').classList.add('d-none');
-      }
-    });
 
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
