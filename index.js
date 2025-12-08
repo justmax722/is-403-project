@@ -1012,6 +1012,6 @@ app.post("/admin/delete/:id", (req, res) => {
 // Note: /users route removed to keep the project minimal for assignment requirements.
 
 
-app.listen(port, () => {
-    console.log("The server is listening");
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is listening on port ${port}`);
 });
