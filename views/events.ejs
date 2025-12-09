@@ -15,7 +15,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background-color: #f8f9fa;
+      background-color: #faf8f5;
     }
     .main-content {
       flex: 1;
@@ -207,7 +207,7 @@
             </div>
             <% if (events && events.length > 0) { %>
               <div class="ms-auto">
-                <span class="badge bg-primary">
+                <span class="badge badge-primary">
                   <i class="bi bi-calendar-check me-1"></i><%= events.length %> event<%= events.length !== 1 ? 's' : '' %>
                 </span>
               </div>
@@ -285,7 +285,19 @@
                             <% } %>
                           </div>
                           <% if (event.eventtypename) { %>
-                            <span class="badge bg-primary mb-2"><%= event.eventtypename %></span>
+                            <% 
+                              const typeClassMap = {
+                                'Career': 'badge-career',
+                                'Networking': 'badge-networking',
+                                'Workshop': 'badge-workshop',
+                                'Club Meetings': 'badge-club-meetings',
+                                'Social': 'badge-social',
+                                'Informational': 'badge-informational',
+                                'Other': 'badge-other'
+                              };
+                              const badgeClass = typeClassMap[event.eventtypename] || 'badge-primary';
+                            %>
+                            <span class="badge <%= badgeClass %> mb-2"><%= event.eventtypename %></span>
                           <% } %>
                           <% if (event.eventdescription) { %>
                             <p class="card-text mt-2"><%= event.eventdescription %></p>
@@ -351,7 +363,19 @@
                             </p>
                           <% } %>
                           <% if (event.eventtypename) { %>
-                            <span class="badge bg-primary mb-2"><%= event.eventtypename %></span>
+                            <% 
+                              const typeClassMap = {
+                                'Career': 'badge-career',
+                                'Networking': 'badge-networking',
+                                'Workshop': 'badge-workshop',
+                                'Club Meetings': 'badge-club-meetings',
+                                'Social': 'badge-social',
+                                'Informational': 'badge-informational',
+                                'Other': 'badge-other'
+                              };
+                              const badgeClass = typeClassMap[event.eventtypename] || 'badge-primary';
+                            %>
+                            <span class="badge <%= badgeClass %> mb-2"><%= event.eventtypename %></span>
                           <% } %>
                           <% if (event.eventdescription) { %>
                             <p class="card-text"><%= event.eventdescription %></p>

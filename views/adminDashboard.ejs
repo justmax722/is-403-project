@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/custom.css">
   <style>
     body {
-      background-color: #f8f9fa;
+      background-color: #faf8f5;
     }
   </style>
 </head>
@@ -131,7 +131,21 @@
                         <td><%= event.endtime ? new Date(event.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
                         <td><%= event.eventlocation || 'N/A' %></td>
                         <td><%= event.eventhost || 'N/A' %></td>
-                        <td><span class="badge bg-info"><%= event.typename || 'N/A' %></span></td>
+                        <td>
+                          <% 
+                            const typeClassMap = {
+                              'Career': 'badge-career',
+                              'Networking': 'badge-networking',
+                              'Workshop': 'badge-workshop',
+                              'Club Meetings': 'badge-club-meetings',
+                              'Social': 'badge-social',
+                              'Informational': 'badge-informational',
+                              'Other': 'badge-other'
+                            };
+                            const badgeClass = event.typename ? (typeClassMap[event.typename] || 'badge-primary') : 'badge-primary';
+                          %>
+                          <span class="badge <%= badgeClass %>"><%= event.typename || 'N/A' %></span>
+                        </td>
                         <td>
                           <div class="btn-group btn-group-sm" role="group">
                             <a href="/admin/edit/<%= event.eventid %>" class="btn btn-primary">
@@ -191,7 +205,21 @@
                         <td><%= event.endtime ? new Date(event.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
                         <td><%= event.eventlocation || 'N/A' %></td>
                         <td><%= event.eventhost || 'N/A' %></td>
-                        <td><span class="badge bg-info"><%= event.typename || 'N/A' %></span></td>
+                        <td>
+                          <% 
+                            const typeClassMap = {
+                              'Career': 'badge-career',
+                              'Networking': 'badge-networking',
+                              'Workshop': 'badge-workshop',
+                              'Club Meetings': 'badge-club-meetings',
+                              'Social': 'badge-social',
+                              'Informational': 'badge-informational',
+                              'Other': 'badge-other'
+                            };
+                            const badgeClass = event.typename ? (typeClassMap[event.typename] || 'badge-primary') : 'badge-primary';
+                          %>
+                          <span class="badge <%= badgeClass %>"><%= event.typename || 'N/A' %></span>
+                        </td>
                         <td>
                           <div class="btn-group btn-group-sm" role="group">
                             <a href="/admin/edit/<%= event.eventid %>" class="btn btn-primary">
@@ -249,7 +277,21 @@
                           <td><strong><%= submission.eventname %></strong></td>
                           <td><%= submission.starttime ? new Date(submission.starttime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
                           <td><%= submission.endtime ? new Date(submission.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
-                          <td><span class="badge bg-info"><%= submission.typename || 'N/A' %></span></td>
+                          <td>
+                            <% 
+                              const typeClassMap = {
+                                'Career': 'badge-career',
+                                'Networking': 'badge-networking',
+                                'Workshop': 'badge-workshop',
+                                'Club Meetings': 'badge-club-meetings',
+                                'Social': 'badge-social',
+                                'Informational': 'badge-informational',
+                                'Other': 'badge-other'
+                              };
+                              const badgeClass = submission.typename ? (typeClassMap[submission.typename] || 'badge-primary') : 'badge-primary';
+                            %>
+                            <span class="badge <%= badgeClass %>"><%= submission.typename || 'N/A' %></span>
+                          </td>
                           <td><%= submission.submitterEmail || 'N/A' %></td>
                           <td>
                             <div class="btn-group btn-group-sm" role="group">
@@ -308,7 +350,21 @@
                           <td><strong><%= submission.eventname %></strong></td>
                           <td><%= submission.starttime ? new Date(submission.starttime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
                           <td><%= submission.endtime ? new Date(submission.endtime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'N/A' %></td>
-                          <td><span class="badge bg-info"><%= submission.typename || 'N/A' %></span></td>
+                          <td>
+                            <% 
+                              const typeClassMap = {
+                                'Career': 'badge-career',
+                                'Networking': 'badge-networking',
+                                'Workshop': 'badge-workshop',
+                                'Club Meetings': 'badge-club-meetings',
+                                'Social': 'badge-social',
+                                'Informational': 'badge-informational',
+                                'Other': 'badge-other'
+                              };
+                              const badgeClass = submission.typename ? (typeClassMap[submission.typename] || 'badge-primary') : 'badge-primary';
+                            %>
+                            <span class="badge <%= badgeClass %>"><%= submission.typename || 'N/A' %></span>
+                          </td>
                           <td><%= submission.submitterEmail || 'N/A' %></td>
                           <td><span class="badge bg-danger"><%= submission.status %></span></td>
                         </tr>

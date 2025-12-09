@@ -63,14 +63,32 @@ app.use(
 const dbHost = process.env.PGHOST || process.env.DB_HOST || "localhost";
 const isLocalhost = dbHost === "localhost" || dbHost === "127.0.0.1";
 
+// Default port: 5433 for localhost, can be overridden by environment variables for AWS
+const dbPort = process.env.PGPORT || process.env.DB_PORT;
+const defaultPort = isLocalhost ? 5433 : 5432; // 5433 for local pgAdmin, 5432 for standard PostgreSQL
+
+// Get database credentials from environment variables or use defaults
+const dbUser = process.env.PGUSER || process.env.DB_USER || "postgres";
+const dbPassword = process.env.PGPASSWORD || process.env.DB_PASSWORD || "admin";
+const dbName = process.env.PGDATABASE || process.env.DB_NAME || "project3";
+const finalPort = parseInt(dbPort || defaultPort);
+
+// Log connection info for debugging (without password)
+console.log("Database connection config:");
+console.log(`  Host: ${dbHost}`);
+console.log(`  Port: ${finalPort}`);
+console.log(`  User: ${dbUser}`);
+console.log(`  Database: ${dbName}`);
+console.log(`  SSL: ${!isLocalhost ? 'enabled' : 'disabled'}`);
+
 const knex = require("knex")({
     client: "pg",
     connection: {
         host: dbHost,
-        user: process.env.PGUSER || process.env.DB_USER || "postgres",
-        password: process.env.PGPASSWORD || process.env.DB_PASSWORD || "admin",
-        database: process.env.PGDATABASE || process.env.DB_NAME || "project3",
-        port: parseInt(process.env.PGPORT || process.env.DB_PORT || 5432),
+        user: dbUser,
+        password: dbPassword,
+        database: dbName,
+        port: finalPort,
         // SSL configuration for AWS RDS (required for secure connections)
         // Enable SSL for remote connections (RDS), disable for localhost
         ssl: !isLocalhost ? {
