@@ -351,6 +351,7 @@ app.post("/signup", async (req, res) => {
             throw new Error("Unable to create account.");
         }
 
+        req.session.isLoggedIn = true;
         req.session.submitterId = newUser.id;
         req.session.submitterEmail = email;
         req.session.userRole = "submitter";
