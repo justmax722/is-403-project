@@ -536,8 +536,23 @@ app.get("/submitter/dashboard", (req, res) => {
 // ADMIN ROUTES - All require authentication
 // ============================================
 
+// Middleware to ensure only admins can access admin routes
+const requireAdmin = (req, res, next) => {
+    if (req.session.userRole === "admin") {
+        return next();
+    }
+    
+    // If user is a submitter, redirect to their dashboard
+    if (req.session.userRole === "submitter" && req.session.submitterId) {
+        return res.redirect("/submitter/dashboard");
+    }
+    
+    // Otherwise, redirect to login
+    return res.redirect("/login");
+};
+
 // Admin Dashboard - List all events (separate upcoming and past)
-app.get("/admin/dashboard", (req, res) => {
+app.get("/admin/dashboard", requireAdmin, (req, res) => {
     const eventsQuery = knex.select(
         "events.eventid",
         "events.eventname",
@@ -618,7 +633,7 @@ app.get("/admin/dashboard", (req, res) => {
         });
 });
 
-app.post("/admin/submissions/:id/approve", (req, res) => {
+app.post("/admin/submissions/:id/approve", requireAdmin, (req, res) => {
     const submissionId = parseInt(req.params.id, 10);
     if (isNaN(submissionId)) {
         return res.redirect("/admin/dashboard");
@@ -661,7 +676,7 @@ app.post("/admin/submissions/:id/approve", (req, res) => {
         });
 });
 
-app.post("/admin/submissions/:id/deny", (req, res) => {
+app.post("/admin/submissions/:id/deny", requireAdmin, (req, res) => {
     const submissionId = parseInt(req.params.id, 10);
     if (isNaN(submissionId)) {
         return res.redirect("/admin/dashboard");
@@ -680,7 +695,7 @@ app.post("/admin/submissions/:id/deny", (req, res) => {
 });
 
 // Admin Create Event - Show form
-app.get("/admin/create", (req, res) => {
+app.get("/admin/create", requireAdmin, (req, res) => {
     // Get event types for dropdown
     knex.select("eventtypeid", "eventtypename")
         .from("eventtypes")
@@ -696,7 +711,7 @@ app.get("/admin/create", (req, res) => {
 });
 
 // Admin Create Event - Handle form submission with file upload
-app.post("/admin/create", (req, res) => {
+app.post("/admin/create", requireAdmin, (req, res) => {
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
     const locationValue = eventLocation ? eventLocation.trim() : '';
     
@@ -790,7 +805,7 @@ app.post("/admin/create", (req, res) => {
 });
 
 // Admin Edit Event - Show form
-app.get("/admin/edit/:id", (req, res) => {
+app.get("/admin/edit/:id", requireAdmin, (req, res) => {
     const eventId = req.params.id;
     
     // Get event and event types
@@ -814,7 +829,7 @@ app.get("/admin/edit/:id", (req, res) => {
 });
 
 // Admin Edit Event - Handle form submission with file upload
-app.post("/admin/edit/:id", (req, res) => {
+app.post("/admin/edit/:id", requireAdmin, (req, res) => {
     const eventId = req.params.id;
     const { eventName, eventDescription, startTime, endTime, eventLocation, eventHost, eventTypeID, eventurl, eventlinktext } = req.body;
     const locationValue = eventLocation ? eventLocation.trim() : '';
@@ -940,7 +955,7 @@ app.post("/admin/edit/:id", (req, res) => {
 });
 
 // Admin Delete Event
-app.post("/admin/delete/:id", (req, res) => {
+app.post("/admin/delete/:id", requireAdmin, (req, res) => {
     const eventId = req.params.id;
     
     knex("events")
